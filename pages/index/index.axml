@@ -3,7 +3,6 @@
     <view class="sub-tab {{sub === 'index' ? 'sub-tab-on' : ''}}" data-sub="index" onTap="switchSub"><text>大盘指数</text></view>
     <view class="sub-tab {{sub === 'fund' ? 'sub-tab-on' : ''}}" data-sub="fund" onTap="switchSub"><text>全部基金</text></view>
     <view class="sub-tab {{sub === 'etf' ? 'sub-tab-on' : ''}}" data-sub="etf" onTap="switchSub"><text>ETF 基金</text></view>
-    <view class="sub-tab" onTap="goSettings"><text>设置</text></view>
   </view>
 
   <!-- 大盘指数 -->

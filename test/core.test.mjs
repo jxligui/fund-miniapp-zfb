@@ -168,4 +168,37 @@ db.clearFundBase();
 assert.equal(db.libInfo().fundCount, 0);
 assert.equal(db.libInfo().etfCount, 24);
 
-console.log('ALL PASS: 11 组用例通过');
+// 12. 基金库全量同步（模拟东财分页接口）
+const pagesData = {
+  1: { date: '2026-11-18', total: 5, pages: 2, rows: [
+    { code: '000001', name: '基金A', pinyin: 'JJA', nav: 1.2, prevNav: 1.1, pct: 9.09, sg: '开放申购', sh: '开放赎回' },
+    { code: '110022', name: '基金B', pinyin: 'JJB', nav: 3.01, prevNav: 3.027, pct: -0.56, sg: '开放申购', sh: '开放赎回' },
+  ] },
+  2: { date: '2026-11-18', total: 5, pages: 2, rows: [
+    { code: '161725', name: '基金C', pinyin: 'JJC', nav: 0.5791, prevNav: 0.5864, pct: -1.24, sg: '开放申购', sh: '开放赎回' },
+  ] },
+};
+const progressCalls = [];
+const syncRes = await db.syncFundLibrary(
+  async (page, size, onlySale) => pagesData[page] || null,
+  { force: true, onProgress: (p, pages, count) => progressCalls.push({ p, pages, count }) }
+);
+assert.equal(syncRes.onSale, 3);
+assert.equal(syncRes.navRows, 3);
+assert.equal(syncRes.date, '2026-11-18');
+assert.equal(progressCalls.length, 2);
+assert.equal(db.libInfo().fundCount, 3);
+assert.ok(db.getFundBase('161725').onSale === 1);
+// 净值也同步进了缓存
+assert.equal(db.getNavDb('000001').nav, 1.2);
+// pinyin 检索
+page = db.fundBasePage({ query: 'JJB' });
+assert.equal(page.total, 1);
+assert.equal(page.items[0].code, '110022');
+// 节流：非 force 的第二次调用不再拉取
+const fetched = [];
+const throttled = await db.syncFundLibrary(async (p) => { fetched.push(p); return null; });
+assert.equal(fetched.length, 0);
+assert.ok(throttled.onSale >= 3);
+
+console.log('ALL PASS: 12 组用例通过');

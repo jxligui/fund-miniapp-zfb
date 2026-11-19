@@ -1,8 +1,12 @@
 import {
   libInfo, fundBaseTypes, fundBasePage, clearFundBase, clearAll,
-  exportDb, importDb, markLibRefreshed, initDb,
+  initDb, syncFundLibrary,
 } from '../../utils/db.js';
-import { listMasterPasswords, addMasterPassword, removeMasterPassword, clearMasterPasswords, isValidMasterPassword, MASTER_PWD_MAX, MASTER_PWD_LENGTH } from '../../utils/store.js';
+import { fetchFundPage } from '../../utils/api.js';
+import {
+  getRefreshSec, setRefreshSec, getLastUpdated, markUpdated,
+  REFRESH_OPTIONS,
+} from '../../utils/store.js';
 import { toast, confirm } from '../../utils/util.js';
 
 Page({
@@ -16,46 +20,121 @@ Page({
     funds: [],
     total: 0,
 
-    fundStatus: 'onsale',      // onsale | all
-    showMasterMgr: false,
-    masterCount: 0,
-    masterList: [],
-    masterInput: '',
-    masterMsg: '',
+    fundStatus: 'onsale',
 
-    showImport: false,
-    importText: '',
-    importMsg: '',
+    // 行情刷新
+    refreshSec: 30,
+    refreshOptions: [],
+    lastUpdatedText: '尚未刷新',
+    syncing: false,
+    syncProgress: '',
   },
 
   onShow() {
     this.loadAll();
   },
 
+  onHide() {
+    this.stopTimer();
+  },
+
+  onUnload() {
+    this.stopTimer();
+  },
+
   loadAll() {
     initDb();
-    const info = libInfo();
-    const count = listMasterPasswords().length;
+    const sec = getRefreshSec();
     this.setData({
-      info,
+      info: libInfo(),
       types: fundBaseTypes(),
-      masterCount: count,
-      masterList: this.buildMasterList(),
-      fundStatus: this.data.fundStatus || 'onsale',
+      refreshSec: sec,
+      refreshOptions: REFRESH_OPTIONS.map(v => ({ value: v, label: v === 0 ? '关闭' : (v >= 60 ? `${v / 60} 分钟` : `${v} 秒`) })),
+      lastUpdatedText: this.formatLastUpdated(getLastUpdated()),
     });
     this.loadFunds();
+    this.setupTimer();
   },
 
-  buildMasterList() {
-    const n = listMasterPasswords().length;
-    const out = [];
-    for (let i = 0; i < n; i++) out.push({ index: i, no: i + 1 });
-    return out;
+  formatLastUpdated(ts) {
+    if (!ts) return '尚未刷新';
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2, '0');
+    const today = new Date();
+    const sameDay = d.getFullYear() === today.getFullYear()
+      && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+    const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    if (sameDay) return `今天 ${hm}`;
+    return `${d.getMonth() + 1}/${d.getDate()} ${hm}`;
   },
 
-  syncMaster() {
-    const count = listMasterPasswords().length;
-    this.setData({ masterCount: count, masterList: this.buildMasterList() });
+  // --- 自动刷新定时器 ---------------------------------------------------------
+
+  setupTimer() {
+    this.stopTimer();
+    const sec = this.data.refreshSec;
+    if (!sec) return;
+    this._timer = setInterval(() => this.refreshQuotes(), sec * 1000);
+  },
+
+  stopTimer() {
+    if (this._timer) { clearInterval(this._timer); this._timer = null; }
+  },
+
+  /** 手动/定时刷新：通知其它页面重新拉行情 */
+  refreshQuotes() {
+    markUpdated();
+    this.setData({ lastUpdatedText: this.formatLastUpdated(getLastUpdated()) });
+    // 行情页在 onShow 时会重拉；这里触发全局事件广播
+    if (my.triggerEvent) {
+      try { my.triggerEvent('ft-refresh'); } catch (e) {}
+    }
+  },
+
+  async manualUpdate() {
+    if (this.data.syncing) return;
+    this.setData({ syncing: true, syncProgress: '' });
+    try {
+      this.refreshQuotes();
+      toast('行情已刷新');
+    } finally {
+      this.setData({ syncing: false });
+    }
+  },
+
+  onRefreshPick(e) {
+    const value = Number(e.currentTarget.dataset.value);
+    const next = setRefreshSec(value);
+    this.setData({ refreshSec: next });
+    this.setupTimer();
+    toast(value === 0 ? '已关闭自动刷新' : `自动刷新：${value >= 60 ? `${value / 60} 分钟` : `${value} 秒`}`);
+  },
+
+  // --- 基金库同步（外部数据源：东财全量在售基金） ----------------------------
+
+  async syncLibrary() {
+    if (this.data.syncing) return;
+    this.setData({ syncing: true, syncProgress: '开始同步…' });
+    try {
+      const res = await syncFundLibrary(fetchFundPage, {
+        onProgress: (page, pages, count) => {
+          this.setData({ syncProgress: `同步中 第 ${page}/${pages || '?'} 页 · 已入库 ${count} 只` });
+        },
+      });
+      if (res.onSale > 0) {
+        this.setData({ syncProgress: `同步完成：${res.onSale} 只在售基金，净值 ${res.navRows} 条（${res.date}）` });
+        toast(`已同步 ${res.onSale} 只基金`);
+      } else {
+        this.setData({ syncProgress: '20 小时内已同步过，或无数据返回' });
+        toast('无需重复同步');
+      }
+      this.loadAll();
+    } catch (e) {
+      this.setData({ syncProgress: '同步出错：' + (e && e.message ? e.message : '未知错误') });
+      toast('同步出错');
+    } finally {
+      this.setData({ syncing: false });
+    }
   },
 
   // --- 基金库 ---------------------------------------------------------------
@@ -117,74 +196,6 @@ Page({
       clearAll();
       toast('已清空全部数据');
       this.loadAll();
-    });
-  },
-
-  // --- 导入导出 -------------------------------------------------------------
-
-  toggleImport() {
-    this.setData({ showImport: !this.data.showImport, importText: '', importMsg: '' });
-  },
-
-  onImportText(e) {
-    this.setData({ importText: e.detail.value, importMsg: '' });
-  },
-
-  doExport() {
-    const json = exportDb();
-    this.setData({ showImport: true, importText: json, importMsg: '已导出到下方文本框，可复制保存' });
-    my.setClipboard({ data: json });
-    toast('已复制到剪贴板');
-  },
-
-  doImport() {
-    const res = importDb(this.data.importText);
-    this.setData({ importMsg: res.message });
-    if (res.ok) {
-      toast('导入成功');
-      this.loadAll();
-    }
-  },
-
-  // --- 万能密码 -------------------------------------------------------------
-
-  toggleMasterMgr() {
-    this.syncMaster();
-    this.setData({ showMasterMgr: !this.data.showMasterMgr, masterInput: '', masterMsg: '' });
-  },
-
-  onMasterInput(e) {
-    this.setData({ masterInput: e.detail.value, masterMsg: '' });
-  },
-
-  addMaster() {
-    const pwd = String(this.data.masterInput || '').trim();
-    if (!isValidMasterPassword(pwd)) {
-      this.setData({ masterMsg: `万能密码必须是 ${MASTER_PWD_LENGTH} 位数字` });
-      return;
-    }
-    const res = addMasterPassword(pwd);
-    this.setData({ masterMsg: res.message, masterInput: res.ok ? '' : this.data.masterInput });
-    this.syncMaster();
-    if (res.ok) toast('已添加万能密码');
-  },
-
-  removeMaster(e) {
-    const index = e.currentTarget.dataset.index;
-    confirm(`确定删除第 ${Number(index) + 1} 个万能密码？`, '删除万能密码').then(ok => {
-      if (!ok) return;
-      const r = removeMasterPassword(index);
-      this.setData({ masterMsg: r.message });
-      this.syncMaster();
-    });
-  },
-
-  clearMasters() {
-    confirm(`确定删除全部 ${this.data.masterCount} 个万能密码？`, '清空万能密码').then(ok => {
-      if (!ok) return;
-      const r = clearMasterPasswords();
-      this.setData({ masterMsg: r.message });
-      this.syncMaster();
     });
   },
 });

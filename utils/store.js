@@ -19,6 +19,8 @@ const K = {
   indices: 'ft.indices',
   pin: 'ft.pin',
   masterPwds: 'ft.masterPwds',
+  refreshSec: 'ft.refreshSec',
+  lastUpdated: 'ft.lastUpdated',
 };
 
 function read(key, fallback) {
@@ -151,8 +153,7 @@ export function verifyAnyPassword(pwd) {
   return 'none';
 }
 
-function hash(text) {
-  // 轻量哈希：足够用于本地 PIN 校验（非加密存储，仅避免明文）
+function hash(text) {  // 轻量哈希：足够用于本地 PIN 校验（非加密存储，仅避免明文）
   let h1 = 0x811c9dc5, h2 = 0x1000193;
   for (let i = 0; i < text.length; i++) {
     const c = text.charCodeAt(i);
@@ -346,6 +347,34 @@ export function isToday(dateStr) {
   if (p.length < 3 || !isFinite(p[0])) return true;
   const d = new Date();
   return p[0] === d.getFullYear() && p[1] === d.getMonth() + 1 && p[2] === d.getDate();
+}
+
+// --- 行情刷新设置 ------------------------------------------------------------
+//
+// refreshSec：自动刷新间隔（秒），存 ft.refreshSec；0 表示关闭自动刷新。
+// lastUpdated：最近一次行情刷新时间戳（毫秒），存 ft.lastUpdated。
+
+export const REFRESH_OPTIONS = [0, 15, 30, 60, 300];
+
+export function getRefreshSec() {
+  const v = read(K.refreshSec, 30);
+  const n = Number(v);
+  return REFRESH_OPTIONS.indexOf(n) >= 0 ? n : 30;
+}
+
+export function setRefreshSec(sec) {
+  const n = Number(sec);
+  write(K.refreshSec, REFRESH_OPTIONS.indexOf(n) >= 0 ? n : 30);
+  return getRefreshSec();
+}
+
+export function markUpdated(at) {
+  write(K.lastUpdated, at || Date.now());
+}
+
+export function getLastUpdated() {
+  const v = Number(read(K.lastUpdated, 0));
+  return isFinite(v) && v > 0 ? v : 0;
 }
 
 /** 金额保留 2 位小数（避免 110.00000000000001 这类浮点误差）。 */

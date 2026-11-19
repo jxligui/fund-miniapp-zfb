@@ -45,10 +45,6 @@ Page({
     else this.loadFunds();
   },
 
-  goSettings() {
-    my.navigateTo({ url: '/pages/settings/settings' });
-  },
-
   refreshCurrent() {
     if (this.data.sub === 'index') return this.loadIndex();
     if (this.data.sub === 'etf') return this.loadEtf();

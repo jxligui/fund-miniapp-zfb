@@ -149,7 +149,7 @@ export function fundBasePage({ page = 1, size = 20, query = '', type = '', statu
     rows = rows.filter(r =>
       String(r.code).toUpperCase().indexOf(q) >= 0 ||
       String(r.name || '').toUpperCase().indexOf(q) >= 0 ||
-      String(r.pinyin || '').toUpperCase().indexOf(q) >= 0
+      String(r.pinyin || '').indexOf(q) >= 0
     );
   }
   rows.sort((a, b) => String(a.code).localeCompare(String(b.code)));
@@ -300,4 +300,59 @@ export function clearFundBase() {
   touch();
   saveDb();
   return true;
+}
+
+/**
+ * 同步东财在售基金到本地基金库（对齐 fund-tracker 的 syncOnSale）。
+ * fetchPage 通常注入 utils/api.js 的 fetchFundPage，便于测试。
+ * 每页 200 只、共约 103 页；进度通过 onProgress(page, pages) 上报。
+ * 返回 { onSale, navRows, date }。
+ */
+export async function syncFundLibrary(fetchPage, { force = false, onProgress = null } = {}) {
+  if (typeof fetchPage !== 'function') return { onSale: 0, navRows: 0, date: null };
+  const d = db();
+  // 20 小时节流（与 fund-tracker 一致）
+  const last = d.meta.onsaleSyncedAt || 0;
+  if (!force && Date.now() - last < 20 * 3600 * 1000) {
+    return { onSale: Object.keys(d.fund_base).filter(k => d.fund_base[k].onSale).length, navRows: 0, date: null };
+  }
+  let onSale = 0;
+  let navRows = 0;
+  let navDate = null;
+  let page = 1;
+  for (;;) {
+    const data = await fetchPage(page, 200, 1);
+    if (!data || !data.rows || data.rows.length === 0) break;
+    navDate = navDate || data.date;
+    for (const r of data.rows) {
+      d.fund_base[r.code] = {
+        code: r.code,
+        name: r.name || '',
+        pinyin: r.pinyin || '',
+        type: '',
+        kind: 'fund',
+        onSale: 1,
+      };
+      if (navDate && r.nav != null) {
+        d.fund_nav[r.code] = {
+          date: navDate, nav: r.nav, prevNav: r.prevNav, pct: r.pct,
+          updatedAt: Date.now(),
+        };
+        navRows++;
+      }
+    }
+    onSale += data.rows.length;
+    touch();
+    saveDb();
+    if (onProgress) { try { onProgress(page, data.pages || 0, onSale); } catch (e) {} }
+    if (page >= (data.pages || 0) || page > 200) break;
+    page++;
+  }
+  if (onSale > 0) {
+    d.meta.onsaleSyncedAt = Date.now();
+    d.meta.libRefreshedAt = Date.now();
+    touch();
+    saveDb();
+  }
+  return { onSale, navRows, date: navDate };
 }

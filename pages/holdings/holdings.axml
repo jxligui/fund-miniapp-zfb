@@ -1,18 +1,6 @@
 <view class="page">
-  <!-- PIN 解锁遮罩 -->
-  <view class="lock-mask" a:if="{{!unlocked}}">
-    <view class="lock-box">
-      <view class="lock-title"><text>持仓基金已锁定</text></view>
-      <view class="lock-sub"><text>请输入本地密码查看持仓数据</text></view>
-      <input class="input" type="number" password maxlength="8" placeholder="请输入密码"
-        value="{{pinInput}}" onInput="onUnlockInput" />
-      <button class="btn btn-primary" style="width:100%" onTap="unlock">解锁</button>
-    </view>
-  </view>
-
-  <block a:else>
-    <!-- 总览 -->
-    <view class="overview">
+  <!-- 总览 -->
+  <view class="overview">
       <view class="ov-cell">
         <view class="ov-label"><text>总资产</text></view>
         <view class="ov-value ov-value-big"><text>{{totals.amountText}}</text></view>
@@ -92,7 +80,6 @@
     <view class="empty" a:if="{{visible.length === 0}}"><text>
       暂无持仓基金。点击「＋ 添加」按金额添加，或用「批量导入」粘贴「基金代码 金额」。
     </text></view>
-  </block>
 
   <!-- 添加/编辑弹层 -->
   <view class="modal" a:if="{{showAdd}}">

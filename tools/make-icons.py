@@ -1,8 +1,28 @@
-"""生成 tabBar 图标（81x81 PNG）。用最小依赖手写 PNG 编码。"""
-import os, struct, zlib
+"""生成 tabBar 图标（81x81 PNG，4x 超采样抗锯齿）。
+
+设计对齐深色金融主题（ui-ux-pro-max 设计系统）：
+  未选中 slate-400 #94a3b8 描边风格 / 选中 amber-500 #f59e0b
+
+图标与底部功能区一一对应：
+  tab-market    行情   上升趋势折线 + 箭头（↗）
+  tab-watch     自选   五角星（未选描边 / 选中实心）
+  tab-hold      持仓   三根胶囊柱（组合收益）
+  tab-settings  设置   滑块调节杆
+
+纯标准库实现：手写 PNG 编码，无第三方依赖。
+"""
+import os, math, struct, zlib
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "images")
 os.makedirs(OUT, exist_ok=True)
+
+SIZE = 81
+SS = 4                    # 超采样倍数
+BIG = SIZE * SS
+
+GRAY = (148, 163, 184)    # slate-400
+GOLD = (245, 158, 11)     # amber-500
+
 
 def png(width, height, pixels):
     raw = b''
@@ -17,68 +37,156 @@ def png(width, height, pixels):
     return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', ihdr)
             + chunk(b'IDAT', zlib.compress(raw, 9)) + chunk(b'IEND', b''))
 
-SIZE = 81
-GRAY = (140, 140, 140, 255)
-BLUE = (22, 119, 255, 255)
-CLEAR = (0, 0, 0, 0)
 
-def draw(kind, color):
-    """kind: 'market' 折线, 'watch' 星标, 'hold' 柱状"""
-    px = [[CLEAR for _ in range(SIZE)] for _ in range(SIZE)]
-    def put(x, y):
-        if 0 <= x < SIZE and 0 <= y < SIZE:
-            px[y][x] = color
-    def rect(x0, y0, x1, y1):
-        for y in range(y0, y1 + 1):
-            for x in range(x0, x1 + 1):
-                put(x, y)
-    if kind == 'market':
-        # 折线图：上升折线 + 下方填充
-        pts = [(12, 56), (26, 44), (40, 50), (54, 30), (68, 18)]
-        for i in range(len(pts) - 1):
-            x0, y0 = pts[i]; x1, y1 = pts[i + 1]
-            steps = max(abs(x1 - x0), abs(y1 - y0)) * 2
-            for s in range(steps + 1):
-                x = round(x0 + (x1 - x0) * s / steps)
-                y = round(y0 + (y1 - y0) * s / steps)
-                for dx in range(-2, 3):
-                    for dy in range(-2, 3):
-                        put(x + dx, y + dy)
-        for x in range(12, 69):
-            for y in range(64, 68):
-                put(x, y)
-    elif kind == 'watch':
-        # 五角星
-        import math
-        cx, cy, R = 40, 42, 28
+class Icon:
+    """在 SS 倍大画布上画 alpha 遮罩，盒式降采样得到平滑抗锯齿边缘。"""
+
+    def __init__(self):
+        self.a = [[0.0] * BIG for _ in range(BIG)]
+
+    def dot(self, x, y, r):
+        """实心圆（最终坐标系单位）。"""
+        R = r * SS
+        cx, cy = x * SS, y * SS
+        R2 = R * R
+        x0 = max(0, int(cx - R)); x1 = min(BIG - 1, int(cx + R) + 1)
+        y0 = max(0, int(cy - R)); y1 = min(BIG - 1, int(cy + R) + 1)
+        for yy in range(y0, y1 + 1):
+            dy = yy + 0.5 - cy
+            dy2 = dy * dy
+            row = self.a[yy]
+            for xx in range(x0, x1 + 1):
+                dx = xx + 0.5 - cx
+                if dx * dx + dy2 <= R2:
+                    row[xx] = 1.0
+
+    def line(self, x0, y0, x1, y1, w):
+        """圆头描边线段（沿路径盖圆，天然圆角连接）。"""
+        r = w / 2.0
+        steps = max(1, int(math.hypot(x1 - x0, y1 - y0) * SS))
+        for s in range(steps + 1):
+            t = s / steps
+            self.dot(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, r)
+
+    def rect(self, x0, y0, x1, y1):
+        for yy in range(max(0, int(y0 * SS)), min(BIG, int(y1 * SS) + 1)):
+            row = self.a[yy]
+            for xx in range(max(0, int(x0 * SS)), min(BIG, int(x1 * SS) + 1)):
+                row[xx] = 1.0
+
+    def bar(self, x, top, bottom, w):
+        """胶囊柱：上下半圆端头的圆角柱。"""
+        r = w / 2.0
+        self.rect(x, top + r, x + w, bottom - r)
+        self.dot(x + r, top + r, r)
+        self.dot(x + r, bottom - r, r)
+
+    def poly_fill(self, pts):
+        """多边形扫描线填充（偶奇规则）。"""
+        P = [(x * SS, y * SS) for x, y in pts]
+        n = len(P)
+        y0 = max(0, int(min(p[1] for p in P)))
+        y1 = min(BIG - 1, int(max(p[1] for p in P)))
+        for yy in range(y0, y1 + 1):
+            py = yy + 0.5
+            xs = []
+            for i in range(n):
+                ax, ay = P[i]
+                bx, by = P[(i + 1) % n]
+                if (ay > py) != (by > py):
+                    xs.append((bx - ax) * (py - ay) / (by - ay) + ax)
+            xs.sort()
+            row = self.a[yy]
+            for i in range(0, len(xs) - 1, 2):
+                lo = max(0, int(math.ceil(xs[i] - 0.5)))
+                hi = min(BIG - 1, int(math.floor(xs[i + 1] - 0.5)))
+                for xx in range(lo, hi + 1):
+                    row[xx] = 1.0
+
+    def star_points(self, cx, cy, rout, rin):
         pts = []
         for i in range(10):
             ang = -math.pi / 2 + i * math.pi / 5
-            r = R if i % 2 == 0 else R * 0.45
+            r = rout if i % 2 == 0 else rin
             pts.append((cx + r * math.cos(ang), cy + r * math.sin(ang)))
-        def inside(px_, py):
-            # 射线法
-            c = False
-            n = len(pts)
-            for i in range(n):
-                x1, y1 = pts[i]; x2, y2 = pts[(i + 1) % n]
-                if (y1 > py) != (y2 > py):
-                    xint = (x2 - x1) * (py - y1) / (y2 - y1) + x1
-                    if px_ < xint:
-                        c = not c
-            return c
-        for y in range(SIZE):
-            for x in range(SIZE):
-                if inside(x + 0.5, y + 0.5):
-                    put(x, y)
-    else:  # hold 柱状图
-        for i, (x0, h) in enumerate([(14, 26), (30, 40), (46, 32), (62, 48)]):
-            rect(x0, 64 - h, x0 + 15, 64)
-    return px
+        return pts
 
-for kind, base in [('market', 'tab-market'), ('watch', 'tab-watch'), ('hold', 'tab-hold')]:
-    with open(os.path.join(OUT, base + '.png'), 'wb') as f:
-        f.write(png(SIZE, SIZE, draw(kind, GRAY)))
-    with open(os.path.join(OUT, base + '-active.png'), 'wb') as f:
-        f.write(png(SIZE, SIZE, draw(kind, BLUE)))
-print("icons written to", os.path.abspath(OUT))
+    def render(self, rgb):
+        inv = 1.0 / (SS * SS)
+        px = []
+        for y in range(SIZE):
+            row = []
+            for x in range(SIZE):
+                base = x * SS
+                acc = 0
+                for dy in range(SS):
+                    src = self.a[y * SS + dy]
+                    acc += src[base] + src[base + 1] + src[base + 2] + src[base + 3]
+                alpha = int(round(max(0.0, min(1.0, acc * inv)) * 255))
+                row.append([rgb[0], rgb[1], rgb[2], alpha])
+            px.append(row)
+        return px
+
+
+# ---------- 图标定义（最终坐标系，81x81，留 ~13px 边距） ----------
+
+def draw_market(c):
+    """行情：上升趋势折线 + ↗ 箭头 + 底部轴线。"""
+    c.line(13, 56, 28, 42, 5.5)
+    c.line(28, 42, 42, 49, 5.5)
+    c.line(42, 49, 62, 26, 5.5)
+    c.line(62, 26, 62, 38, 5)      # 箭头竖边
+    c.line(62, 26, 50, 26, 5)      # 箭头横边
+    c.line(13, 66, 69, 66, 3.5)    # 轴线
+
+
+def draw_watch_outline(c):
+    """自选（未选中）：描边五角星。"""
+    pts = c.star_points(40.5, 42, 26, 11.5)
+    for i in range(10):
+        x0, y0 = pts[i]
+        x1, y1 = pts[(i + 1) % 10]
+        c.line(x0, y0, x1, y1, 4.5)
+
+
+def draw_watch_filled(c):
+    """自选（选中）：实心五角星。"""
+    c.poly_fill(c.star_points(40.5, 42, 26, 11.5))
+
+
+def draw_hold(c):
+    """持仓：三根胶囊柱，中间最高（组合收益）。"""
+    c.bar(15, 42, 62, 14)
+    c.bar(33.5, 26, 62, 14)
+    c.bar(52, 35, 62, 14)
+
+
+def draw_settings(c):
+    """设置：三条滑轨 + 错位滑块（现代调节杆样式）。"""
+    for y in (27, 40.5, 54):
+        c.line(15, y, 65, y, 5)
+    c.dot(32, 27, 8.5)
+    c.dot(49, 40.5, 8.5)
+    c.dot(33, 54, 8.5)
+
+
+ICONS = {
+    'tab-market':   (draw_market, draw_market),
+    'tab-watch':    (draw_watch_outline, draw_watch_filled),
+    'tab-hold':     (draw_hold, draw_hold),
+    'tab-settings': (draw_settings, draw_settings),
+}
+
+
+def write(name, pixels):
+    with open(os.path.join(OUT, name), 'wb') as f:
+        f.write(png(SIZE, SIZE, pixels))
+
+
+for base, (inactive, active) in ICONS.items():
+    c = Icon(); inactive(c)
+    write(base + '.png', c.render(GRAY))
+    c = Icon(); active(c)
+    write(base + '-active.png', c.render(GOLD))
+    print('written:', base, '+ active')
+print('icons ->', os.path.abspath(OUT))

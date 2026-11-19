@@ -32,7 +32,7 @@ Page({
       const trend = detail.trend.map(p => ({
         d: p.d,
         h: Math.round(10 + (p.v - min) / range * 90),
-        c: (detail.totalPct != null && detail.totalPct >= 0) ? '#f5222d' : '#52c41a',
+        c: (detail.totalPct != null && detail.totalPct >= 0) ? '#ef4444' : '#22c55e',
       }));
       formatted = Object.assign({}, detail, {
         latestNavText: money(detail.latestNav),

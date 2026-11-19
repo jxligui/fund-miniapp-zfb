@@ -122,7 +122,7 @@ function check(fileRel, schemaName) {
 let total = 0;
 total += check('mini.project.json', 'mini-project.schema.json');
 total += check('app.json', 'app.schema.json');
-for (const page of ['index', 'watch', 'holdings', 'login', 'detail']) {
+for (const page of ['index', 'watch', 'holdings', 'settings', 'detail']) {
   total += check(`pages/${page}/${page}.json`, 'page.schema.json');
 }
 console.log(total === 0 ? '\nPASS: 所有配置均符合支付宝 schema' : `\n共 ${total} 个问题`);

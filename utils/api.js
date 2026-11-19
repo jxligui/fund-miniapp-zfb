@@ -140,6 +140,49 @@ function todayStr() {
 }
 
 /**
+ * 分页拉取东财基金全量列表（对齐 DSH 插件 fund-tracker 的 syncOnSale）。
+ * 单页 200 只，可指定页码；onlySale=1 只取在售基金。
+ * 返回 { date, total, pages, rows: [{code,name,pinyin,nav,prevNav,pct,sg,sh}] }
+ */
+export async function fetchFundPage(page = 1, size = 200, onlySale = 1) {
+  const url = `https://fund.eastmoney.com/Data/Fund_JJJZ_Data.aspx`
+    + `?t=1&lx=1&letter=&gsid=&text=&sort=zdf,desc&page=${page},${size}`
+    + `&dt=${Date.now()}&atfc=&onlySale=${onlySale}`;
+  const text = await requestText(url, { header: { referer: 'https://fund.eastmoney.com/data/jdzf.html' } });
+  if (!text || typeof text !== 'string') return null;
+  const s = text.indexOf('{');
+  const e = text.lastIndexOf('}');
+  if (s < 0 || e < 0) return null;
+  let db;
+  try {
+    db = new Function(`return ${text.slice(s, e + 1)}`)();
+  } catch (err) {
+    return null;
+  }
+  const rows = [];
+  for (const r of db.datas || []) {
+    if (!r || !/^\d{6}$/.test(String(r[0] || ''))) continue;
+    const nav = Number(r[3]);
+    rows.push({
+      code: String(r[0]),
+      name: String(r[1] || ''),
+      pinyin: String(r[2] || '').toUpperCase(),
+      nav: nav > 0 ? nav : null,
+      prevNav: Number(r[5]) > 0 ? Number(r[5]) : null,
+      pct: r[8] != null && isFinite(Number(r[8])) ? Number(r[8]) : null,
+      sg: String(r[9] || ''),
+      sh: String(r[10] || ''),
+    });
+  }
+  return {
+    date: Array.isArray(db.showday) && db.showday[0] ? String(db.showday[0]) : null,
+    total: Number(db.record) || 0,
+    pages: Number(db.pages) || 0,
+    rows,
+  };
+}
+
+/**
  * 大盘指数 / ETF 实时行情（push2）。
  * secids 形如 '1.000001,0.159915'。
  */

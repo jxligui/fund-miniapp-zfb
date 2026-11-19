@@ -3,15 +3,11 @@ import { searchFundList } from '../../utils/data.js';
 import {
   listHoldings, upsertHolding, removeHolding, moveToGroup, moveBatchToGroup,
   listGroups, addGroup, renameGroup, deleteGroup, buildPortfolio, putNav, navOf,
-  hasPin, verifyPin,
 } from '../../utils/store.js';
 import { money, pct, signedMoney, signColor, toast, confirm, parseBatch } from '../../utils/util.js';
 
-const PIN_KEY = 'ft.unlocked';
-
 Page({
   data: {
-    unlocked: false,
     rows: [],
     totals: {},
     groups: [],
@@ -38,39 +34,15 @@ Page({
   },
 
   onLoad() {
-    this.checkLock();
+    this.refresh();
   },
 
   onShow() {
-    if (this.data.unlocked) this.refresh();
+    this.refresh();
   },
 
   onPullDownRefresh() {
-    const p = this.data.unlocked ? this.refresh() : Promise.resolve();
-    p.then(() => my.stopPullDownRefresh());
-  },
-
-  // --- PIN 锁 ---------------------------------------------------------------
-
-  checkLock() {
-    if (!hasPin()) { this.setData({ unlocked: true }); return; }
-    this.setData({ unlocked: my.getStorageSync(PIN_KEY) === '1' });
-    if (!this.data.unlocked) {
-      my.navigateTo({ url: '/pages/login/login' });
-    }
-  },
-
-  onUnlockInput(e) {
-    this.setData({ pinInput: e.detail.value });
-  },
-
-  unlock() {
-    const pin = this.data.pinInput || '';
-    if (!verifyPin(pin)) { toast('密码错误'); return; }
-    my.setStorageSync(PIN_KEY, '1');
-    this.setData({ unlocked: true });
-    my.navigateBack();
-    this.refresh();
+    this.refresh().then(() => my.stopPullDownRefresh());
   },
 
   // --- 数据 -----------------------------------------------------------------

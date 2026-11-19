@@ -25,10 +25,10 @@ export function compactAmt(v) {
   return String(Math.round(v));
 }
 
-/** 涨跌配色：涨红跌绿（与插件一致） */
+/** 涨跌配色：涨红跌绿（A股习惯，深色主题高对比版本） */
 export function signColor(v) {
-  if (v == null || !isFinite(v) || v === 0) return '#8c8c8c';
-  return v > 0 ? '#f5222d' : '#52c41a';
+  if (v == null || !isFinite(v) || v === 0) return '#94a3b8';
+  return v > 0 ? '#ef4444' : '#22c55e';
 }
 
 /** 「基金代码 金额」批量导入解析 */
