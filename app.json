@@ -4,26 +4,23 @@
     "pages/watch/watch",
     "pages/holdings/holdings",
     "pages/login/login",
-    "pages/detail/detail"
+    "pages/detail/detail",
+    "pages/settings/settings"
   ],
   "window": {
     "defaultTitle": "基金小助理",
     "titleBarColor": "#1677ff",
     "backgroundColor": "#f5f6f8",
-    "backgroundTextStyle": "dark",
     "pullRefresh": true
   },
   "tabBar": {
-    "color": "#8c8c8c",
+    "textColor": "#8c8c8c",
     "selectedColor": "#1677ff",
     "backgroundColor": "#ffffff",
-    "borderStyle": "black",
     "items": [
       { "pagePath": "pages/index/index", "name": "今日行情", "icon": "images/tab-market.png", "activeIcon": "images/tab-market-active.png" },
       { "pagePath": "pages/watch/watch", "name": "我的自选", "icon": "images/tab-watch.png", "activeIcon": "images/tab-watch-active.png" },
       { "pagePath": "pages/holdings/holdings", "name": "持仓基金", "icon": "images/tab-hold.png", "activeIcon": "images/tab-hold-active.png" }
     ]
-  },
-  "style": "v2",
-  "sitemapLocation": "sitemap.json"
+  }
 }

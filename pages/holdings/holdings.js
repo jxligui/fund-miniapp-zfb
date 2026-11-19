@@ -1,11 +1,11 @@
-import { fetchFundQuotes } from '../utils/api.js';
-import { searchFundList } from '../utils/data.js';
+import { fetchFundQuotes } from '../../utils/api.js';
+import { searchFundList } from '../../utils/data.js';
 import {
   listHoldings, upsertHolding, removeHolding, moveToGroup, moveBatchToGroup,
   listGroups, addGroup, renameGroup, deleteGroup, buildPortfolio, putNav, navOf,
   hasPin, verifyPin,
-} from '../utils/store.js';
-import { money, pct, signedMoney, signColor, toast, confirm, parseBatch } from '../utils/util.js';
+} from '../../utils/store.js';
+import { money, pct, signedMoney, signColor, toast, confirm, parseBatch } from '../../utils/util.js';
 
 const PIN_KEY = 'ft.unlocked';
 

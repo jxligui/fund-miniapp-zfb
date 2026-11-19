@@ -1,25 +1,26 @@
 <view class="page">
   <view class="sub-tabs">
-    <view class="sub-tab {{sub === 'index' ? 'on' : ''}}" data-sub="index" onTap="switchSub">大盘指数</view>
-    <view class="sub-tab {{sub === 'fund' ? 'on' : ''}}" data-sub="fund" onTap="switchSub">全部基金</view>
-    <view class="sub-tab {{sub === 'etf' ? 'on' : ''}}" data-sub="etf" onTap="switchSub">ETF 基金</view>
+    <view class="sub-tab {{sub === 'index' ? 'sub-tab-on' : ''}}" data-sub="index" onTap="switchSub"><text>大盘指数</text></view>
+    <view class="sub-tab {{sub === 'fund' ? 'sub-tab-on' : ''}}" data-sub="fund" onTap="switchSub"><text>全部基金</text></view>
+    <view class="sub-tab {{sub === 'etf' ? 'sub-tab-on' : ''}}" data-sub="etf" onTap="switchSub"><text>ETF 基金</text></view>
+    <view class="sub-tab" onTap="goSettings"><text>设置</text></view>
   </view>
 
   <!-- 大盘指数 -->
   <block a:if="{{sub === 'index'}}">
     <view class="toolbar">
       <text class="hint" style="flex:1">共 {{indices.length}} 个指数 / 第 {{indexPage}} 页</text>
-      <button class="btn small" onTap="prevIndexPage" disabled="{{indexPage <= 1}}">上一页</button>
-      <button class="btn small" onTap="nextIndexPage" disabled="{{indexPage >= indexPages}}">下一页</button>
+      <button class="btn btn-small" onTap="prevIndexPage" disabled="{{indexPage <= 1}}">上一页</button>
+      <button class="btn btn-small" onTap="nextIndexPage" disabled="{{indexPage >= indexPages}}">下一页</button>
     </view>
 
     <view class="card idx-card" a:for="{{indices}}" a:key="code">
       <view class="idx-head">
         <view>
-          <view class="idx-name">{{item.name}}</view>
-          <view class="idx-meta">{{item.code}} · {{item.category}}</view>
+          <view class="idx-name"><text>{{item.name}}</text></view>
+          <view class="idx-meta"><text>{{item.code}} · {{item.category}}</text></view>
         </view>
-        <text class="watch-star {{item.watched ? 'on' : ''}}" data-code="{{item.code}}" data-name="{{item.name}}" catchTap="toggleIndexWatch">
+        <text class="watch-star {{item.watched ? 'watch-star-on' : ''}}" data-code="{{item.code}}" data-name="{{item.name}}" catchTap="toggleIndexWatch">
           {{item.watched ? '★' : '☆'}}
         </text>
       </view>
@@ -27,10 +28,10 @@
         <text class="idx-price" style="color:{{item.color}}">{{item.price}}</text>
         <text class="idx-pct {{item.pctClass}}">{{item.changePct}}</text>
       </view>
-      <view class="idx-chg" style="color:{{item.color}}">涨跌额 {{item.changeAmt}}</view>
+      <view class="idx-chg" style="color:{{item.color}}"><text>涨跌额 {{item.changeAmt}}</text></view>
     </view>
 
-    <view class="empty" a:if="{{!loading && indices.length === 0}}">加载中…</view>
+    <view class="empty" a:if="{{!loading && indices.length === 0}}"><text>加载中…</text></view>
   </block>
 
   <!-- 全部基金 -->
@@ -40,44 +41,44 @@
     </view>
     <view class="toolbar" a:if="{{fundTypes.length > 1}}">
       <scroll-view scroll-x style="white-space:nowrap;flex:1">
-        <text class="group-tab {{fundType === 'all' ? 'on' : ''}}" data-type="all" onTap="onFundType">全部</text>
-        <text class="group-tab {{fundType === item ? 'on' : ''}}" a:for="{{fundTypes}}" a:key="*this" data-type="{{item}}" onTap="onFundType">{{item}}</text>
+        <text class="group-tab {{fundType === 'all' ? 'group-tab-on' : ''}}" data-type="all" onTap="onFundType">全部</text>
+        <text class="group-tab {{fundType === item ? 'group-tab-on' : ''}}" a:for="{{fundTypes}}" a:key="*this" data-type="{{item}}" onTap="onFundType">{{item}}</text>
       </scroll-view>
     </view>
     <view class="toolbar">
       <text class="hint" style="flex:1">第 {{fundPage}} / {{fundPages}} 页</text>
-      <button class="btn small" onTap="prevFundPage" disabled="{{fundPage <= 1}}">上一页</button>
-      <button class="btn small" onTap="nextFundPage" disabled="{{fundPage >= fundPages}}">下一页</button>
+      <button class="btn btn-small" onTap="prevFundPage" disabled="{{fundPage <= 1}}">上一页</button>
+      <button class="btn btn-small" onTap="nextFundPage" disabled="{{fundPage >= fundPages}}">下一页</button>
     </view>
 
     <view class="list-row" a:for="{{funds}}" a:key="code">
       <view>
-        <view class="name">{{item.name}} <text class="tag">{{item.type}}</text></view>
-        <view class="sub">{{item.code}} · 净值 {{item.nav}}</view>
+        <view class="name list-row-name"><text>{{item.name}}</text><text class="tag">{{item.type}}</text></view>
+        <view class="sub list-row-sub"><text>{{item.code}} · 净值 {{item.nav}}</text></view>
       </view>
-      <view class="right">
-        <view style="color:{{item.color}};font-weight:600">{{item.changePct}}</view>
-        <view class="sub">{{item.watched ? '★ 已自选' : '＋ 自选'}}</view>
+      <view class="right list-row-right">
+        <view style="color:{{item.color}};font-weight:600"><text>{{item.changePct}}</text></view>
+        <view class="sub list-row-sub"><text>{{item.watched ? '★ 已自选' : '＋ 自选'}}</text></view>
       </view>
     </view>
 
-    <view class="empty" a:if="{{!loading && funds.length === 0}}">
+    <view class="empty" a:if="{{!loading && funds.length === 0}}"><text>
       暂无结果。输入基金代码或名称搜索，或在「我的自选 / 持仓基金」中添加。
-    </view>
+    </text></view>
   </block>
 
   <!-- ETF -->
   <block a:if="{{sub === 'etf'}}">
     <view class="list-row" a:for="{{etfs}}" a:key="code">
       <view>
-        <view class="name">{{item.name}} <text class="tag brand">{{item.theme}}</text></view>
-        <view class="sub">{{item.code}} · 成交额 {{item.amount}}</view>
+        <view class="name list-row-name"><text>{{item.name}}</text><text class="tag tag-brand">{{item.theme}}</text></view>
+        <view class="sub list-row-sub"><text>{{item.code}} · 成交额 {{item.amount}}</text></view>
       </view>
-      <view class="right">
-        <view style="font-weight:600">{{item.price}}</view>
-        <view style="color:{{item.color}}">{{item.changePct}}</view>
+      <view class="right list-row-right">
+        <view style="font-weight:600"><text>{{item.price}}</text></view>
+        <view style="color:{{item.color}}"><text>{{item.changePct}}</text></view>
       </view>
     </view>
-    <view class="empty" a:if="{{!loading && etfs.length === 0}}">加载中…</view>
+    <view class="empty" a:if="{{!loading && etfs.length === 0}}"><text>加载中…</text></view>
   </block>
 </view>

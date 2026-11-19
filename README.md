@@ -35,7 +35,31 @@
   - **金额制加仓/减仓**：只填金额，按最新净值折算份额（`份额 = 金额 ÷ 净值`），买入移动加权成本
   - **批量导入**：每行 `基金代码 金额`，自动折算份额与成本
   - **PIN 锁**：进入持仓页需输入本地密码
+  - **万能密码**：除本机 PIN 外，可另设最多 6 个 8 位数字万能密码用于解锁
 - **基金详情**：最新净值、近半年走势图、六档区间涨幅
+- **设置**（首页「设置」进入）
+  - **数据库总览**：基金库 / ETF / 指数 / 净值缓存条目数统计
+  - **基金基础库**：本地检索（代码 / 名称 / 类型），在售与全部切换，分页浏览
+  - **万能密码管理**：增删最多 6 个 8 位万能密码
+  - **数据备份**：导出为 JSON（自动复制到剪贴板）、粘贴 JSON 导入
+  - **危险操作**：清空基金库 / 清空全部本地数据
+
+### 本地数据库
+
+表结构对齐 DSH 插件 `dsh-plugin-fund-tracker` 的 SQLite 版本，用
+`my.setStorageSync` 模拟「表」（支付宝小程序无 SQLite）：
+
+| 表 | 内容 |
+|---|---|
+| `fund_base` | 基金基础库 `{ code, name, pinyin, type, kind, onSale }` |
+| `index_base` | 指数基础库 `{ code, name, secid, category }` |
+| `etf_base` | ETF 基础库 `{ code, name, secid, theme }` |
+| `fund_nav` | 净值缓存 `{ code: { date, nav, prevNav, pct } }` |
+| `user_settings` | 设置项 `{ key: value }` |
+| `meta` | 元信息（库更新时间等） |
+
+基金库的数据来源：搜索基金时自动入库、添加持仓时自动入库，首次启动播种
+演示持仓。**因此离线也能检索基金**。
 
 ## 目录结构
 
@@ -50,21 +74,32 @@ fund-miniapp-zfb/
 │   ├── index/           今日行情（大盘指数 / 全部基金 / ETF）
 │   ├── watch/           我的自选（自选指数 / 自选基金）
 │   ├── holdings/        持仓基金（分组 / 加减仓 / 批量导入）
-│   ├── login/           PIN 码设置与解锁
-│   └── detail/          基金详情（净值走势）
+│   ├── login/           PIN 码设置与解锁 + 万能密码管理
+│   ├── detail/          基金详情（净值走势）
+│   └── settings/        设置（数据库 / 万能密码 / 备份）
 ├── utils/
 │   ├── api.js           行情请求（直连东方财富）
-│   ├── store.js         本地数据层（持仓/自选/分组/净值/PIN）
-│   ├── data.js          内置指数与 ETF 清单、演示数据、搜索
+│   ├── db.js            本地数据库层（fund_base / index_base / nav 等表）
+│   ├── constants.js     指数与 ETF 基础清单
+│   ├── store.js         本地数据层（持仓/自选/分组/净值/PIN/万能密码）
+│   ├── data.js          演示数据、搜索、清单引用
 │   └── util.js          格式化、批量导入解析、提示
 ├── images/              tabBar 图标
 ├── test/core.test.mjs       核心逻辑自测（Node，模拟 my.* API）
 ├── tools/make-icons.py      生成 tabBar 图标
+├── tools/check-*.js         校验脚本（import 路径 / JSON schema / 微信残留 / text 嵌套）
+├── tools/*-to-alipay.js     微信→支付宝 转换脚本
 └── docs/                    接入与发布说明
 ```
 
 > 每个页面由 4 个同名文件组成：`index.js` / `index.json` / `index.axml`（模板）/ `index.acss`（样式）。
 > 这是**支付宝**小程序的扩展名（微信用的是 `.wxml` / `.wxss`）。
+>
+> **支付宝模板与样式的两条硬性限制**（与微信不同，踩过坑）：
+> 1. 非空文本必须放在 `<text>` 组件内 —— `<view>文本</view>` 会报
+>    `非空文本内容必须在 <text> 组件内`；且 `<text>` 不能嵌套 `<text>`。
+> 2. ACSS 选择器只能有**一个 class** —— `.a.b`、`.a .b`、`view.a` 都会报
+>    `should only be one class selector`。变体样式要写成独立类（如 `.btn-primary`）。
 
 ## 开发与调试
 

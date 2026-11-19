@@ -59,4 +59,4 @@
   background: #f5f6f8;
   color: #595959;
 }
-.move-pick.on { background: #1677ff; color: #ffffff; font-weight: 600; }
+.move-pick-on { background: #1677ff; color: #ffffff; font-weight: 600; }

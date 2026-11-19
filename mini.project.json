@@ -1,40 +1,22 @@
 {
   "format": 2,
-  "compileType": "miniprogram",
+  "compileType": "mini",
   "miniprogramRoot": "./",
-  "projectname": "fund-miniapp-zfb",
-  "appid": "2021000000000000",
-  "libVersion": "3.5.0",
-  "setting": {
-    "urlCheck": true,
-    "es6": true,
-    "enhance": true,
-    "postcss": true,
-    "minified": true,
-    "coverView": true,
-    "nodeModules": false,
-    "autoAudits": false,
-    "showShadowRootInAxmlPanel": true,
-    "scopeDataCheck": false,
-    "checkInvalidKey": true,
-    "checkSiteMap": true,
-    "uploadWithSourceMap": true,
-    "compileHotReLoad": false,
-    "useMultiFrameRuntime": true,
-    "useApiHook": true,
-    "useApiHostProcess": true,
-    "enableAppxNetwork": true,
-    "useCompilerModule": true,
-    "packNpmManually": false,
-    "ignoreUploadUnusedFiles": true
-  },
-  "condition": {
-    "miniprogram": {
-      "list": [
-        { "name": "今日行情", "pathName": "pages/index/index", "query": "", "scene": null },
-        { "name": "我的自选", "pathName": "pages/watch/watch", "query": "", "scene": null },
-        { "name": "持仓基金", "pathName": "pages/holdings/holdings", "query": "", "scene": null }
-      ]
+  "compileOptions": {
+    "component2": true,
+    "typescript": false,
+    "less": false,
+    "transpile": {
+      "script": {
+        "ignore": []
+      }
     }
+  },
+  "developOptions": {
+    "hotReload": true,
+    "hotReboot": true,
+    "parallel": true,
+    "sourcemap": true,
+    "minify": false
   }
 }

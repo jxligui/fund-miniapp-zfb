@@ -1,20 +1,20 @@
 <view class="page">
   <view class="card" a:if="{{detail}}">
-    <view class="d-title">{{detail.name || name}}</view>
-    <view class="d-code">{{code}}</view>
-    <view class="d-nav">{{detail.latestNavText}}</view>
-    <view class="d-date">净值日期 {{detail.latestDate}}</view>
+    <view class="d-title"><text>{{detail.name || name}}</text></view>
+    <view class="d-code"><text>{{code}}</text></view>
+    <view class="d-nav"><text>{{detail.latestNavText}}</text></view>
+    <view class="d-date"><text>净值日期 {{detail.latestDate}}</text></view>
 
     <view class="spans">
       <view class="span" a:for="{{spans}}" a:key="key">
-        <view class="span-label">{{item.label}}</view>
-        <view class="span-value" style="color:{{item.color}}">{{item.value}}</view>
+        <view class="span-label"><text>{{item.label}}</text></view>
+        <view class="span-value" style="color:{{item.color}}"><text>{{item.value}}</text></view>
       </view>
     </view>
   </view>
 
   <view class="card" a:if="{{detail && detail.trend.length > 1}}">
-    <view class="d-section">近半年净值走势</view>
+    <view class="d-section"><text>近半年净值走势</text></view>
     <view class="chart">
       <view class="chart-bars">
         <view class="chart-bar" a:for="{{detail.trend}}" a:key="d"
@@ -27,8 +27,8 @@
     </view>
   </view>
 
-  <view class="empty" a:if="{{!loading && !detail}}">
+  <view class="empty" a:if="{{!loading && !detail}}"><text>
     详情加载失败，请稍后重试。
-  </view>
-  <view class="empty" a:if="{{loading}}">加载中…</view>
+  </text></view>
+  <view class="empty" a:if="{{loading}}"><text>加载中…</text></view>
 </view>

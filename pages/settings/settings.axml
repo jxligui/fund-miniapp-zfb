@@ -1,0 +1,121 @@
+<view class="page set-page">
+  <!-- 数据库总览 -->
+  <view class="card">
+    <view class="set-title"><text>📊 数据库</text></view>
+    <view class="set-stats" a:if="{{info}}">
+      <view class="stat-cell">
+        <text class="stat-value">{{info.fundCount}}</text>
+        <text class="stat-label">基金库</text>
+      </view>
+      <view class="stat-cell">
+        <text class="stat-value">{{info.etfCount}}</text>
+        <text class="stat-label">ETF</text>
+      </view>
+      <view class="stat-cell">
+        <text class="stat-value">{{info.indexCount}}</text>
+        <text class="stat-label">指数</text>
+      </view>
+      <view class="stat-cell">
+        <text class="stat-value">{{info.navCount}}</text>
+        <text class="stat-label">净值缓存</text>
+      </view>
+    </view>
+    <view class="set-note" a:if="{{info}}">
+      <text>库更新时间：{{info.refreshedAt ? '尚未刷新' : '内置初始库'}}</text>
+    </view>
+    <view class="btn-row">
+      <button class="btn btn-small" onClick="loadAll"><text>刷新统计</text></button>
+      <button class="btn btn-small btn-danger" onClick="clearFundLib"><text>清空基金库</text></button>
+    </view>
+  </view>
+
+  <!-- 基金基础库检索 -->
+  <view class="card">
+    <view class="set-title"><text>🔍 基金基础库</text></view>
+    <view class="toolbar">
+      <input
+        class="input set-search"
+        placeholder="搜索代码 / 名称"
+        value="{{fundQuery}}"
+        onInput="onQuery"
+      />
+      <button class="btn btn-small" onClick="toggleFundStatus"><text>{{fundStatus === 'onsale' ? '在售' : '全部'}}</text></button>
+    </view>
+
+    <view class="type-row" a:if="{{types.length > 0}}">
+      <view class="type-chip" onTap="onType" data-type=""><text>全部</text></view>
+      <view class="type-chip" a:for="{{types}}" a:key="type" onTap="onType" data-type="{{item.type}}">
+        <text>{{item.type}} {{item.count}}</text>
+      </view>
+    </view>
+
+    <view class="fund-row" a:for="{{funds}}" a:key="code">
+      <view class="fund-main">
+        <text class="fund-name">{{item.name}}</text>
+        <text class="fund-code">{{item.code}} · {{item.type || '未分类'}}</text>
+      </view>
+    </view>
+    <view class="empty" a:if="{{funds.length === 0}}"><text>本地基金库为空。在「持仓基金 → ＋ 添加」中搜索并添加基金会自动入库。</text></view>
+
+    <view class="toolbar" a:if="{{fundPages > 1}}">
+      <text class="hint set-hint">第 {{fundPage}} / {{fundPages}} 页 · 共 {{total}} 条</text>
+      <button class="btn btn-small" onClick="prevPage" disabled="{{fundPage <= 1}}"><text>上一页</text></button>
+      <button class="btn btn-small" onClick="nextPage" disabled="{{fundPage >= fundPages}}"><text>下一页</text></button>
+    </view>
+  </view>
+
+  <!-- 万能密码 -->
+  <view class="card">
+    <view class="set-title" onTap="toggleMasterMgr"><text>🔑 万能密码（{{masterCount}}/{{6}}）</text></view>
+    <block a:if="{{showMasterMgr}}">
+      <view class="set-note">
+        <text>除本机密码外，最多可设置 {{6}} 个 {{8}} 位数字万能密码用于解锁。哈希存储，仅存在本机。</text>
+      </view>
+      <view class="toolbar">
+        <input
+          class="input set-search"
+          type="number"
+          maxlength="8"
+          password
+          placeholder="输入 {{8}} 位万能密码"
+          value="{{masterInput}}"
+          onInput="onMasterInput"
+        />
+        <button class="btn btn-small btn-primary" onClick="addMaster"><text>添加</text></button>
+      </view>
+      <view class="set-note" a:if="{{masterMsg}}"><text>{{masterMsg}}</text></view>
+      <view class="master-row" a:for="{{masterList}}" a:key="index">
+        <text class="master-no">第 {{item.no}} 个</text>
+        <text class="master-ok">已保存</text>
+        <text class="master-del" data-index="{{item.index}}" onTap="removeMaster">删除</text>
+      </view>
+      <button class="btn btn-small btn-danger set-clear" a:if="{{masterCount > 0}}" onClick="clearMasters"><text>清空全部万能密码</text></button>
+    </block>
+  </view>
+
+  <!-- 数据导入导出 -->
+  <view class="card">
+    <view class="set-title"><text>💾 数据备份</text></view>
+    <view class="set-note"><text>导出为 JSON 文本，可复制保存；导入会覆盖当前本地数据。</text></view>
+    <view class="btn-row">
+      <button class="btn btn-small btn-primary" onClick="doExport"><text>导出数据</text></button>
+      <button class="btn btn-small" onClick="toggleImport"><text>{{showImport ? '收起导入' : '导入数据'}}</text></button>
+    </view>
+    <block a:if="{{showImport}}">
+      <textarea
+        class="textarea set-textarea"
+        placeholder="粘贴导出的 JSON 文本"
+        value="{{importText}}"
+        onInput="onImportText"
+      />
+      <view class="set-note" a:if="{{importMsg}}"><text>{{importMsg}}</text></view>
+      <button class="btn btn-small btn-primary set-import-btn" onClick="doImport"><text>执行导入</text></button>
+    </block>
+  </view>
+
+  <!-- 危险操作 -->
+  <view class="card">
+    <view class="set-title"><text>⚠️ 危险操作</text></view>
+    <button class="btn btn-danger set-clear" onClick="clearEverything"><text>清空全部本地数据</text></button>
+  </view>
+</view>

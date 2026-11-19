@@ -29,3 +29,40 @@
   color: #bfbfbf;
   line-height: 1.8;
 }
+
+/* 万能密码 */
+.master-block {
+  margin-top: 32rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+.master-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 26rpx;
+  color: #595959;
+}
+.master-toggle { font-size: 24rpx; color: #1677ff; }
+.master-tip {
+  font-size: 22rpx;
+  color: #bfbfbf;
+  line-height: 1.7;
+  margin: 12rpx 0;
+}
+.master-row { display: flex; align-items: center; gap: 12rpx; }
+.master-input { flex: 1; margin: 0; }
+.master-add { flex-shrink: 0; }
+.master-msg { font-size: 22rpx; color: #fa8c16; margin-top: 8rpx; }
+.master-list { margin-top: 12rpx; }
+.master-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14rpx 0;
+  font-size: 24rpx;
+  color: #595959;
+}
+.master-hash { color: #bfbfbf; font-size: 22rpx; }
+.master-del { color: #f5222d; font-size: 24rpx; }
+.master-clear { margin-top: 12rpx; width: 100%; }

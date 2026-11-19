@@ -1,9 +1,9 @@
-import { fetchMarketQuotes, fetchFundQuotes } from '../utils/api.js';
-import { INDEX_LIBRARY } from '../utils/data.js';
+import { fetchMarketQuotes, fetchFundQuotes } from '../../utils/api.js';
+import { INDEX_LIBRARY } from '../../utils/data.js';
 import {
   listHoldings, listWatchedIndices, setWatchedIndices, removeHolding, buildPortfolio, putNav,
-} from '../utils/store.js';
-import { money, pct, signedMoney, signColor, toast, confirm } from '../utils/util.js';
+} from '../../utils/store.js';
+import { money, pct, signedMoney, signColor, toast, confirm } from '../../utils/util.js';
 
 Page({
   data: {
@@ -48,7 +48,7 @@ Page({
           category: meta[3],
           price: q.price != null ? money(q.price) : '—',
           changePct: q.changePct != null ? pct(q.changePct) : '—',
-          pctClass: q.changePct > 0 ? 'up' : (q.changePct < 0 ? 'down' : ''),
+          pctClass: q.changePct > 0 ? 'idx-pct-up' : (q.changePct < 0 ? 'idx-pct-down' : ''),
           color: signColor(q.changePct),
           changeAmt: q.changeAmt != null ? signedMoney(q.changeAmt) : '—',
         };
@@ -73,7 +73,7 @@ Page({
         shares: r.shares != null ? money(r.shares) : '—',
         nav: r.nav != null ? money(r.nav) : '—',
         changePct: r.changePct != null ? pct(r.changePct) : '—',
-        pctClass: r.changePct > 0 ? 'up' : (r.changePct < 0 ? 'down' : ''),
+        pctClass: r.changePct > 0 ? 'idx-pct-up' : (r.changePct < 0 ? 'idx-pct-down' : ''),
         color: signColor(r.changePct),
         amount: r.amount != null ? money(r.amount) : '—',
         usingYesterday: r.usingYesterday,

@@ -1,7 +1,7 @@
-import { fetchMarketQuotes, fetchFundQuotes } from '../utils/api.js';
-import { INDEX_LIBRARY, ETF_LIBRARY, searchFundList } from '../utils/data.js';
-import { listHoldings, listWatchedIndices, setWatch, upsertHolding, setWatchedIndices } from '../utils/store.js';
-import { money, pct, signedMoney, signColor, compactAmt, debounce, toast } from '../utils/util.js';
+import { fetchMarketQuotes, fetchFundQuotes } from '../../utils/api.js';
+import { INDEX_LIBRARY, ETF_LIBRARY, searchFundList, listAllFunds } from '../../utils/data.js';
+import { listHoldings, listWatchedIndices, setWatch, upsertHolding, setWatchedIndices } from '../../utils/store.js';
+import { money, pct, signedMoney, signColor, compactAmt, debounce, toast } from '../../utils/util.js';
 
 const PAGE_SIZE = 10;
 
@@ -45,6 +45,10 @@ Page({
     else this.loadFunds();
   },
 
+  goSettings() {
+    my.navigateTo({ url: '/pages/settings/settings' });
+  },
+
   refreshCurrent() {
     if (this.data.sub === 'index') return this.loadIndex();
     if (this.data.sub === 'etf') return this.loadEtf();
@@ -66,7 +70,7 @@ Page({
         code, name, category,
         price: q.price != null ? money(q.price) : '—',
         changePct: q.changePct != null ? pct(q.changePct) : '—',
-        pctClass: q.changePct > 0 ? 'up' : (q.changePct < 0 ? 'down' : ''),
+        pctClass: q.changePct > 0 ? 'idx-pct-up' : (q.changePct < 0 ? 'idx-pct-down' : ''),
         color: signColor(q.changePct),
         changeAmt: q.changeAmt != null ? signedMoney(q.changeAmt) : '—',
         watched: watched.has(code),
@@ -117,7 +121,7 @@ Page({
           code, name, theme,
           price: q.price != null ? money(q.price) : '—',
           changePct: q.changePct != null ? pct(q.changePct) : '—',
-          pctClass: q.changePct > 0 ? 'up' : (q.changePct < 0 ? 'down' : ''),
+          pctClass: q.changePct > 0 ? 'idx-pct-up' : (q.changePct < 0 ? 'idx-pct-down' : ''),
           color: signColor(q.changePct),
           changeAmt: q.changeAmt != null ? signedMoney(q.changeAmt) : '—',
           amount: compactAmt(q.amount),
@@ -149,19 +153,34 @@ Page({
   async loadFunds() {
     this.setData({ loading: true });
     const { fundQuery, fundType, fundPage } = this.data;
-    // 演示/自选/持仓的基金优先展示（本地数据），再补网络搜索结果
-    let items = [];
-    const local = listHoldings().filter(h => h.name && h.name.includes(fundQuery.trim()));
-    items = local.map(h => ({ code: h.code, name: h.name, type: '已添加' }));
+    const q = fundQuery.trim();
 
-    if (fundQuery.trim()) {
-      const remote = await searchFundList(fundQuery.trim());
-      const seen = new Set(items.map(x => x.code));
-      for (const r of remote) if (!seen.has(r.code)) items.push(r);
+    // 1) 本地基金库（离线可用）
+    let items = listAllFunds({ query: q, type: fundType === 'all' ? '' : fundType, status: 'all' })
+      .map(r => ({ code: r.code, name: r.name, type: r.type || '其他' }));
+
+    // 2) 持仓/自选（即使不在基金库也要显示）
+    const seen = new Set(items.map(x => x.code));
+    for (const h of listHoldings()) {
+      if (!h.name) continue;
+      if (q && h.name.indexOf(q) < 0 && String(h.code).indexOf(q) < 0) continue;
+      if (seen.has(h.code)) continue;
+      items.push({ code: h.code, name: h.name, type: '已添加' });
+      seen.add(h.code);
+    }
+
+    // 3) 网络搜索补齐
+    if (q) {
+      const remote = await searchFundList(q);
+      for (const r of remote) {
+        if (seen.has(r.code)) continue;
+        items.push(r);
+        seen.add(r.code);
+      }
     }
 
     // 按类型筛选
-    if (fundType !== 'all') items = items.filter(x => (x.type || '').includes(fundType));
+    if (fundType !== 'all') items = items.filter(x => (x.type || '').indexOf(fundType) >= 0);
 
     const pages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
     const page = Math.min(fundPage, pages);
@@ -170,13 +189,13 @@ Page({
     // 补充行情
     const quotes = await fetchFundQuotes(slice.map(x => x.code));
     const enriched = slice.map(x => {
-      const q = quotes[x.code];
+      const q2 = quotes[x.code];
       return {
         ...x,
-        nav: q ? money(q.nav) : '—',
-        changePct: q ? pct(q.pct) : '—',
-        pctClass: q && q.pct > 0 ? 'up' : (q && q.pct < 0 ? 'down' : ''),
-        color: signColor(q ? q.pct : null),
+        nav: q2 ? money(q2.nav) : '—',
+        changePct: q2 ? pct(q2.pct) : '—',
+        pctClass: q2 && q2.pct > 0 ? 'idx-pct-up' : (q2 && q2.pct < 0 ? 'idx-pct-down' : ''),
+        color: signColor(q2 ? q2.pct : null),
       };
     });
 

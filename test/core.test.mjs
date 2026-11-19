@@ -98,4 +98,74 @@ assert.equal(util.compactAmt(60132016153.5), '601.32亿');
 assert.equal(store.isToday('2026-11-19'), true);
 assert.equal(store.isToday('2026-11-18'), false);
 
-console.log('ALL PASS: 9 组用例通过');
+// 10. 万能密码（最多 6 个、8 位数字）
+const db = await import('../utils/db.js');
+assert.equal(store.hasMasterPasswords(), false);
+assert.equal(store.isValidMasterPassword('12345678'), true);
+assert.equal(store.isValidMasterPassword('1234567'), false);   // 7 位
+assert.equal(store.isValidMasterPassword('123456789'), false);  // 9 位
+assert.equal(store.isValidMasterPassword('1234567a'), false);   // 非数字
+assert.equal(store.addMasterPassword('1234567').ok, false);    // 格式非法
+assert.equal(store.addMasterPassword('12345678').ok, true);
+assert.equal(store.hasMasterPasswords(), true);
+assert.equal(store.verifyMasterPassword('12345678'), true);
+assert.equal(store.verifyMasterPassword('87654321'), false);
+assert.equal(store.addMasterPassword('12345678').ok, false);    // 重复
+// 填满 6 个
+for (const p of ['11111111', '22222222', '33333333', '44444444', '55555555']) {
+  assert.equal(store.addMasterPassword(p).ok, true);
+}
+assert.equal(store.listMasterPasswords().length, 6);
+assert.equal(store.addMasterPassword('66666666').ok, false);    // 超过 6 个
+// 统一解锁校验：PIN 与万能密码都可
+assert.equal(store.verifyAnyPassword('1234'), 'pin');
+assert.equal(store.verifyAnyPassword('12345678'), 'master');
+assert.equal(store.verifyAnyPassword('00000000'), 'none');
+// 删除
+assert.equal(store.removeMasterPassword(0).ok, true);
+assert.equal(store.listMasterPasswords().length, 5);
+assert.equal(store.verifyMasterPassword('12345678'), false);
+assert.equal(store.clearMasterPasswords().ok, true);
+assert.equal(store.listMasterPasswords().length, 0);
+
+// 11. 本地数据库（对齐 fund-tracker 的表结构）
+db.initDb();
+let info = db.libInfo();
+assert.equal(info.etfCount, 24);          // ETF 基础库已播种
+assert.equal(info.indexCount, 28);        // 指数基础库已播种
+assert.ok(info.fundCount >= 2);           // 持仓同步进了基金库
+
+// 基金库写入与检索
+assert.equal(db.upsertFundBase({ code: '110022', name: '易方达消费行业股票', type: '股票型' }), true);
+db.upsertFundBase({ code: '161725', name: '招商中证白酒指数(LOF)A', type: '指数型' });
+let page = db.fundBasePage({ query: '白酒' });
+assert.equal(page.total, 1);
+assert.equal(page.items[0].code, '161725');
+page = db.fundBasePage({ type: '股票型' });
+assert.ok(page.items.some(x => x.code === '110022'));
+
+// 类型统计
+const types = db.fundBaseTypes();
+assert.ok(types.some(t => t.type === '股票型'));
+
+// 设置项
+db.setSetting('refreshSec', 30);
+assert.equal(db.getSetting('refreshSec'), 30);
+assert.equal(db.getSetting('missing', 'def'), 'def');
+
+// 净值缓存
+db.putNavDb('000001', { date: '2026-11-19', nav: 1.2, prevNav: 1.1, pct: 9, updatedAt: Date.now() });
+assert.equal(db.getNavDb('000001').nav, 1.2);
+
+// 导出 / 导入
+const dumped = db.exportDb();
+assert.ok(dumped.includes('fund_base'));
+assert.equal(db.importDb('not json').ok, false);
+assert.equal(db.importDb(dumped).ok, true);
+
+// 清空基金库（保留其它数据）
+db.clearFundBase();
+assert.equal(db.libInfo().fundCount, 0);
+assert.equal(db.libInfo().etfCount, 24);
+
+console.log('ALL PASS: 11 组用例通过');

@@ -1,9 +1,17 @@
 import { listHoldings, listWatchedIndices, saveHoldings, setWatchedIndices } from './utils/store.js';
 import { DEMO_HOLDINGS, DEFAULT_INDICES } from './utils/data.js';
+import { initDb, upsertFundBaseBatch } from './utils/db.js';
 
 App({
   onLaunch() {
-    // 首次启动：播种演示数据（仅本地）
+    // 首次启动：初始化本地数据库 + 播种演示数据（仅本地）
+    try {
+      initDb();
+      // 演示持仓同步进基金基础库
+      upsertFundBaseBatch(DEMO_HOLDINGS.map(h => ({ code: h.code, name: h.name })));
+    } catch (e) {
+      console.error('[app] db init failed', e);
+    }
     this.seedDemoData();
   },
 

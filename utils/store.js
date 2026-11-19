@@ -7,7 +7,10 @@
  *   ft.groups     自定义分组名数组
  *   ft.indices    关注的指数代码数组
  *   ft.pin        本地 PIN 码（哈希）
+ *   ft.masterPwds 万能密码哈希数组（最多 6 个，8 位数字）
  */
+
+import { upsertFundBase } from './db.js';
 
 const K = {
   holdings: 'ft.holdings',
@@ -15,6 +18,7 @@ const K = {
   groups: 'ft.groups',
   indices: 'ft.indices',
   pin: 'ft.pin',
+  masterPwds: 'ft.masterPwds',
 };
 
 function read(key, fallback) {
@@ -66,6 +70,84 @@ export function clearPin() {
   try { my.removeStorageSync(K.pin); } catch (e) {}
 }
 
+// --- 万能密码（master passwords）--------------------------------------------
+//
+// 除本机 PIN 码外，额外支持最多 6 个「万能密码」用于解锁。
+// 规则：必须是 8 位纯数字。存储形式为哈希，不保存明文。
+
+export const MASTER_PWD_MAX = 6;
+export const MASTER_PWD_LENGTH = 8;
+
+/** 读取全部万能密码的哈希列表 */
+export function listMasterPasswords() {
+  const raw = read(K.masterPwds, []);
+  return Array.isArray(raw) ? raw : [];
+}
+
+/** 是否已设置万能密码 */
+export function hasMasterPasswords() {
+  return listMasterPasswords().length > 0;
+}
+
+/** 是否是合法的万能密码格式（8 位纯数字） */
+export function isValidMasterPassword(pwd) {
+  return /^\d{8}$/.test(String(pwd || ''));
+}
+
+/**
+ * 添加一个万能密码。
+ * 返回 { ok, message }：格式非法、已存在或数量超限时 ok=false。
+ */
+export function addMasterPassword(pwd) {
+  const pwdText = String(pwd || '');
+  if (!isValidMasterPassword(pwdText)) {
+    return { ok: false, message: `万能密码必须是 ${MASTER_PWD_LENGTH} 位数字` };
+  }
+  const list = listMasterPasswords();
+  if (list.length >= MASTER_PWD_MAX) {
+    return { ok: false, message: `最多只能设置 ${MASTER_PWD_MAX} 个万能密码` };
+  }
+  const hashed = hash(pwdText);
+  if (list.indexOf(hashed) >= 0) {
+    return { ok: false, message: '该万能密码已存在' };
+  }
+  list.push(hashed);
+  write(K.masterPwds, list);
+  return { ok: true, message: '已添加万能密码' };
+}
+
+/** 删除指定下标（从 0 开始）的万能密码 */
+export function removeMasterPassword(index) {
+  const list = listMasterPasswords();
+  const i = Number(index);
+  if (!isFinite(i) || i < 0 || i >= list.length) return { ok: false, message: '序号无效' };
+  list.splice(i, 1);
+  write(K.masterPwds, list);
+  return { ok: true, message: '已删除' };
+}
+
+/** 清空所有万能密码 */
+export function clearMasterPasswords() {
+  write(K.masterPwds, []);
+  return { ok: true, message: '已清空全部万能密码' };
+}
+
+/** 校验是否为万能密码 */
+export function verifyMasterPassword(pwd) {
+  const hashed = hash(String(pwd || ''));
+  return listMasterPasswords().indexOf(hashed) >= 0;
+}
+
+/**
+ * 统一的解锁校验：先判本机 PIN，再判万能密码。
+ * 返回 'pin' | 'master' | 'none'
+ */
+export function verifyAnyPassword(pwd) {
+  if (verifyPin(pwd)) return 'pin';
+  if (verifyMasterPassword(pwd)) return 'master';
+  return 'none';
+}
+
 function hash(text) {
   // 轻量哈希：足够用于本地 PIN 校验（非加密存储，仅避免明文）
   let h1 = 0x811c9dc5, h2 = 0x1000193;
@@ -96,16 +178,27 @@ export function upsertHolding(item) {
   const merged = {
     code: item.code,
     name: item.name || prev.name || '',
-    shares: item.shares === undefined ? (prev.shares ?? null) : item.shares,
-    cost: item.cost === undefined ? (prev.cost ?? null) : item.cost,
-    watch: item.watch === undefined ? (prev.watch ?? false) : !!item.watch,
-    groupName: item.groupName === undefined ? (prev.groupName ?? null) : item.groupName,
-    pendingAmount: item.pendingAmount === undefined ? (prev.pendingAmount ?? null) : item.pendingAmount,
+    shares: item.shares === undefined ? (prev.shares == null ? null : prev.shares) : item.shares,
+    cost: item.cost === undefined ? (prev.cost == null ? null : prev.cost) : item.cost,
+    watch: item.watch === undefined ? (prev.watch == null ? false : prev.watch) : !!item.watch,
+    groupName: item.groupName === undefined ? (prev.groupName == null ? null : prev.groupName) : item.groupName,
+    pendingAmount: item.pendingAmount === undefined ? (prev.pendingAmount == null ? null : prev.pendingAmount) : item.pendingAmount,
     updatedAt: Date.now(),
   };
   if (idx >= 0) list[idx] = merged; else list.unshift(merged);
   saveHoldings(list);
+  syncFundBase(merged);
   return merged;
+}
+
+/** 把持仓/自选条目同步进本地基金基础库（fund_base），让基金库有真实数据 */
+export function syncFundBase(item) {
+  if (!item || !item.code) return;
+  try {
+    upsertFundBase({ code: item.code, name: item.name || '' });
+  } catch (e) {
+    // 数据库层不可用时不影响主流程
+  }
 }
 
 export function removeHolding(code) {

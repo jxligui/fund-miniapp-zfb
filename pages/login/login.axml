@@ -1,8 +1,8 @@
 <view class="page login-page">
   <view class="login-box">
-    <view class="login-title">基金小助理</view>
+    <view class="login-title"><text>基金小助理</text></view>
     <view class="login-sub">
-      {{mode === 'setup' ? '首次使用，请设置本地密码' : '请输入密码查看持仓基金'}}
+      <text>{{mode === 'setup' ? '首次使用，请设置本地密码' : '请输入密码查看持仓基金'}}</text>
     </view>
 
     <input
@@ -10,7 +10,7 @@
       type="number"
       maxlength="8"
       password
-      placeholder="{{mode === 'setup' ? '设置 4-8 位数字密码' : '请输入密码'}}"
+      placeholder="{{mode === 'setup' ? '设置 4-8 位数字密码' : '请输入密码或万能密码'}}"
       value="{{pin}}"
       data-key="pin"
       onInput="onInput"
@@ -31,18 +31,53 @@
       />
     </block>
 
-    <view class="err" a:if="{{error}}">{{error}}</view>
+    <view class="err" a:if="{{error}}"><text>{{error}}</text></view>
 
-    <button class="btn primary login-btn" onClick="onSubmit">
-      {{mode === 'setup' ? '设置密码并进入' : '解锁'}}
+    <button class="btn btn-primary login-btn" onClick="onSubmit">
+      <text>{{mode === 'setup' ? '设置密码并进入' : '解锁'}}</text>
     </button>
 
     <view class="login-links">
       <text a:if="{{mode === 'unlock'}}" class="link" onTap="onReset">忘记密码？</text>
     </view>
 
+    <!-- 万能密码管理 -->
+    <view class="master-block">
+      <view class="master-head" onTap="toggleMasterMgr">
+        <text>万能密码（{{masterCount}}/{{6}}）</text>
+        <text class="master-toggle">{{showMasterMgr ? '收起' : '展开'}}</text>
+      </view>
+
+      <block a:if="{{showMasterMgr}}">
+        <view class="master-tip">
+          <text>除本机密码外，可设置最多 {{6}} 个 {{8}} 位数字万能密码用于解锁。仅保存在本机（哈希存储）。</text>
+        </view>
+        <view class="master-row">
+          <input
+            class="input master-input"
+            type="number"
+            maxlength="8"
+            password
+            placeholder="输入 {{8}} 位万能密码"
+            value="{{masterInput}}"
+            onInput="onMasterInput"
+          />
+          <button class="btn btn-primary master-add" onClick="addMaster"><text>添加</text></button>
+        </view>
+        <view class="master-msg" a:if="{{masterMsg}}"><text>{{masterMsg}}</text></view>
+        <view class="master-list" a:if="{{masterCount > 0}}">
+          <view class="master-item" a:for="{{masterList}}" a:key="index">
+            <text class="master-idx">第 {{item.no}} 个</text>
+            <text class="master-hash">已保存</text>
+            <text class="master-del" data-index="{{item.index}}" onTap="removeMaster">删除</text>
+          </view>
+          <button class="btn btn-danger master-clear" onClick="clearMasters"><text>清空全部</text></button>
+        </view>
+      </block>
+    </view>
+
     <view class="login-tip">
-      密码仅保存在你的手机本地（不加密存储于本机），用于防止他人随手查看持仓；所有持仓、净值数据也只存在本机，不会上传服务器。
+      <text>密码仅保存在你的手机本地（哈希存储），用于防止他人随手查看持仓；所有持仓、净值数据也只存在本机，不会上传服务器。</text>
     </view>
   </view>
 </view>
