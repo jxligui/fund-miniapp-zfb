@@ -1,7 +1,7 @@
 """生成 tabBar 图标（81x81 PNG）。用最小依赖手写 PNG 编码。"""
 import os, struct, zlib
 
-OUT = os.path.join(os.path.dirname(__file__), "..", "miniprogram", "images")
+OUT = os.path.join(os.path.dirname(__file__), "..", "images")
 os.makedirs(OUT, exist_ok=True)
 
 def png(width, height, pixels):

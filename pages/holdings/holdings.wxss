@@ -60,19 +60,3 @@
   color: #595959;
 }
 .move-pick.on { background: #1677ff; color: #ffffff; font-weight: 600; }
-
-/* 勾选框 */
-.check-box {
-  width: 36rpx;
-  height: 36rpx;
-  border: 2rpx solid #d9d9d9;
-  border-radius: 8rpx;
-  margin-right: 16rpx;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  font-size: 24rpx;
-}
-.check-box.on { background: #1677ff; border-color: #1677ff; }

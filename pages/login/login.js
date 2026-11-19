@@ -1,5 +1,5 @@
-import { hasPin, setPin, verifyPin, clearPin } from '../../utils/store.js';
-import { toast } from '../../utils/util.js';
+import { hasPin, setPin, verifyPin, clearPin } from '../utils/store.js';
+import { toast } from '../utils/util.js';
 
 Page({
   data: {
@@ -58,9 +58,5 @@ Page({
         }
       },
     });
-  },
-
-  onSkip() {
-    this.setData({ mode: 'unlock' });
   },
 });

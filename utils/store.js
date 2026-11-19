@@ -7,7 +7,6 @@
  *   ft.groups     自定义分组名数组
  *   ft.indices    关注的指数代码数组
  *   ft.pin        本地 PIN 码（哈希）
- *   ft.settings   其它设置（刷新间隔、基金状态筛选等）
  */
 
 const K = {
@@ -16,7 +15,6 @@ const K = {
   groups: 'ft.groups',
   indices: 'ft.indices',
   pin: 'ft.pin',
-  settings: 'ft.settings',
 };
 
 function read(key, fallback) {
@@ -78,21 +76,6 @@ function hash(text) {
     h2 = (h2 + c * (i + 7)) >>> 0;
   }
   return `${h1.toString(16)}-${h2.toString(16)}-${text.length}`;
-}
-
-// --- settings ---------------------------------------------------------------
-
-export function getSettings() {
-  return Object.assign(
-    { refreshInterval: 60, fundStatus: 'onsale', fundType: 'all' },
-    read(K.settings, {}),
-  );
-}
-
-export function setSetting(key, value) {
-  const s = getSettings();
-  s[key] = value;
-  write(K.settings, s);
 }
 
 // --- holdings / watch / groups ---------------------------------------------
@@ -194,11 +177,11 @@ export function setWatchedIndices(codes) {
 
 // --- NAV cache --------------------------------------------------------------
 
-export function listNavs() {
+function listNavs() {
   return read(K.navs, {}) || {};
 }
 
-export function saveNavs(navs) {
+function saveNavs(navs) {
   write(K.navs, navs || {});
 }
 

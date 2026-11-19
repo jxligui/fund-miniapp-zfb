@@ -1,5 +1,5 @@
-import { fetchFundDetail } from '../../utils/api.js';
-import { money, pct, signColor } from '../../utils/util.js';
+import { fetchFundDetail } from '../utils/api.js';
+import { money, pct, signColor } from '../utils/util.js';
 
 Page({
   data: {

@@ -1,10 +1,10 @@
-import { fetchFundQuotes } from '../../utils/api.js';
+import { fetchFundQuotes } from '../utils/api.js';
 import {
-  listHoldings, upsertHolding, removeHolding, setWatch, moveToGroup, moveBatchToGroup,
+  listHoldings, upsertHolding, removeHolding, moveToGroup, moveBatchToGroup,
   listGroups, addGroup, renameGroup, deleteGroup, buildPortfolio, putNav, navOf,
   hasPin, verifyPin,
-} from '../../utils/store.js';
-import { money, pct, signedMoney, signColor, toast, confirm, parseBatch } from '../../utils/util.js';
+} from '../utils/store.js';
+import { money, pct, signedMoney, signColor, toast, confirm, parseBatch } from '../utils/util.js';
 
 const PIN_KEY = 'ft.unlocked';
 
@@ -38,11 +38,9 @@ Page({
 
   onLoad() {
     this.checkLock();
-    this.setData({ holdings: listHoldings() });
   },
 
   onShow() {
-    this.setData({ holdings: listHoldings() });
     if (this.data.unlocked) this.refresh();
   },
 
@@ -78,8 +76,6 @@ Page({
 
   async refresh() {
     const holdings = listHoldings();
-    const positions = holdings.filter(h => h.shares != null || h.pendingAmount != null);
-    const watchOnly = holdings.filter(h => h.watch && h.shares == null);
 
     // 取行情 + 缓存净值
     const codes = holdings.map(h => h.code);
@@ -125,8 +121,6 @@ Page({
         ...groups.map(g => ({ key: g, name: g, count: countOf(g) })),
         { key: '__none__', name: '未分组', count: countOf('__none__') },
       ],
-      holdings,
-      watchCount: watchOnly.length,
     });
     this.applyFilter();
   },
@@ -159,7 +153,7 @@ Page({
     this.setData({ query: e.detail.value });
     if (!q) { this.setData({ suggest: [] }); return; }
     if (/^\d{6}$/.test(q)) { this.setData({ suggest: [] }); return; }
-    const { searchFundList } = require('../../utils/data.js');
+    const { searchFundList } = require('../utils/data.js');
     searchFundList(q).then(list => this.setData({ suggest: list.slice(0, 10) }));
   },
 
@@ -369,13 +363,6 @@ Page({
     if (!ok) return;
     removeHolding(code);
     toast('已删除');
-    this.refresh();
-  },
-
-  toggleWatch(e) {
-    const { code } = e.currentTarget.dataset;
-    const hold = listHoldings().find(h => h.code === code);
-    if (hold) setWatch(code, !hold.watch);
     this.refresh();
   },
 

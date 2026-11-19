@@ -10,18 +10,6 @@ page {
   box-sizing: border-box;
 }
 
-/* 顶部导航条 */
-.nav-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16rpx 24rpx;
-  background: #ffffff;
-  border-bottom: 1rpx solid #f0f0f0;
-}
-.nav-title { font-size: 32rpx; font-weight: 600; }
-.nav-action { font-size: 26rpx; color: #1677ff; }
-
 /* 二级标签栏 */
 .sub-tabs {
   display: flex;
@@ -50,7 +38,6 @@ page {
   margin: 16rpx 24rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
 }
-.card-row { display: flex; align-items: center; justify-content: space-between; }
 
 /* 指数/基金卡片 */
 .idx-card { margin: 16rpx 24rpx; }
@@ -71,9 +58,6 @@ page {
 .idx-pct.up { background: #f5222d; color: #ffffff; }
 .idx-pct.down { background: #52c41a; color: #ffffff; }
 .idx-chg { font-size: 24rpx; color: #8c8c8c; margin-top: 4rpx; }
-.idx-grid { display: flex; flex-wrap: wrap; margin-top: 16rpx; padding-top: 14rpx; border-top: 1rpx solid #f5f6f8; }
-.idx-kv { width: 50%; display: flex; justify-content: space-between; font-size: 22rpx; color: #8c8c8c; padding: 4rpx 0; }
-.idx-kv b { color: #262626; font-weight: 600; }
 
 /* 持仓卡片 */
 .hold-card { margin: 12rpx 24rpx; }
@@ -177,7 +161,3 @@ page {
 
 /* 工具条 */
 .toolbar { display: flex; align-items: center; gap: 12rpx; padding: 16rpx 24rpx; background: #ffffff; }
-.toolbar .spacer { flex: 1; }
-
-/* 选择器 */
-.picker-inline { font-size: 26rpx; color: #1677ff; }

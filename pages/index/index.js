@@ -1,7 +1,7 @@
-import { fetchMarketQuotes, fetchFundQuotes } from '../../utils/api.js';
-import { INDEX_LIBRARY, ETF_LIBRARY } from '../../utils/data.js';
-import { listHoldings, listWatchedIndices, setWatch, upsertHolding, setWatchedIndices } from '../../utils/store.js';
-import { money, pct, signedMoney, signColor, compactAmt, debounce, toast } from '../../utils/util.js';
+import { fetchMarketQuotes, fetchFundQuotes } from '../utils/api.js';
+import { INDEX_LIBRARY, ETF_LIBRARY } from '../utils/data.js';
+import { listHoldings, listWatchedIndices, setWatch, upsertHolding, setWatchedIndices } from '../utils/store.js';
+import { money, pct, signedMoney, signColor, compactAmt, debounce, toast } from '../utils/util.js';
 
 const PAGE_SIZE = 10;
 
@@ -18,16 +18,13 @@ Page({
     fundQuery: '',
     fundType: 'all',
     fundTypes: [],
-    fundStatus: 'onsale',
     loading: false,
     watchedIndices: [],
   },
 
   onLoad() {
-    this.setData({
-      watchedIndices: listWatchedIndices(),
-      fundStatus: (require('../../utils/store.js').getSettings() || {}).fundStatus || 'onsale',
-    });
+    this.setData({ watchedIndices: listWatchedIndices() });
+    this._debouncedLoadFunds = debounce(() => this.loadFunds(), 300);
     this.loadIndex();
   },
 
@@ -68,9 +65,7 @@ Page({
       return {
         code, name, category,
         price: q.price != null ? money(q.price) : '—',
-        rawPrice: q.price,
         changePct: q.changePct != null ? pct(q.changePct) : '—',
-        pctRaw: q.changePct,
         pctClass: q.changePct > 0 ? 'up' : (q.changePct < 0 ? 'down' : ''),
         color: signColor(q.changePct),
         changeAmt: q.changeAmt != null ? signedMoney(q.changeAmt) : '—',
@@ -148,19 +143,19 @@ Page({
 
   onFundQuery(e) {
     this.setData({ fundQuery: e.detail.value, fundPage: 1 });
-    this._debouncedLoadFunds && this._debouncedLoadFunds();
+    this._debouncedLoadFunds();
   },
 
   async loadFunds() {
     this.setData({ loading: true });
-    const { fundQuery, fundType, fundStatus, fundPage } = this.data;
+    const { fundQuery, fundType, fundPage } = this.data;
     // 演示/自选/持仓的基金优先展示（本地数据），再补网络搜索结果
     let items = [];
     const local = listHoldings().filter(h => h.name && h.name.includes(fundQuery.trim()));
     items = local.map(h => ({ code: h.code, name: h.name, type: '已添加' }));
 
     if (fundQuery.trim()) {
-      const { searchFundList } = require('../../utils/data.js');
+      const { searchFundList } = require('../utils/data.js');
       const remote = await searchFundList(fundQuery.trim());
       const seen = new Set(items.map(x => x.code));
       for (const r of remote) if (!seen.has(r.code)) items.push(r);

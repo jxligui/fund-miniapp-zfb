@@ -1,0 +1,7 @@
+/* 自选星标（★） */
+.watch-star {
+  font-size: 44rpx;
+  color: #ffb400;
+  line-height: 1;
+  padding: 0 8rpx;
+}

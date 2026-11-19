@@ -3,14 +3,13 @@
  *
  * 小程序端注意：所有域名都必须在支付宝开放平台的
  * 「开发设置 → 接口域名（request 合法域名）」中配置：
- *   https://fundgz.1234567.com.cn   （已失效，保留作兜底）
  *   https://fund.eastmoney.com
- *   https://fundmobapi.eastmoney.com
  *   https://push2.eastmoney.com
+ *   https://fundsuggest.eastmoney.com
  */
 
 /** 统一的请求封装：失败返回 null，不抛异常。 */
-export function request(url, options = {}) {
+function request(url, options = {}) {
   return new Promise(resolve => {
     my.request({
       url,
@@ -32,7 +31,7 @@ export function request(url, options = {}) {
 }
 
 /** 文本请求（部分接口返回 JS/HTML 文本而非 JSON）。 */
-export function requestText(url, options = {}) {
+function requestText(url, options = {}) {
   return new Promise(resolve => {
     my.request({
       url,

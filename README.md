@@ -39,23 +39,25 @@
 
 ## 目录结构
 
+小程序代码直接放在项目根目录（`miniprogramRoot` 为 `./`）：
+
 ```
-fund-miniapp/
+fund-miniapp-zfb/
 ├── project.config.json      支付宝开发者工具项目配置
-├── miniprogram/
-│   ├── app.js / app.json / app.wxss
-│   ├── pages/
-│   │   ├── index/           今日行情（大盘指数 / 全部基金 / ETF）
-│   │   ├── watch/           我的自选（自选指数 / 自选基金）
-│   │   ├── holdings/        持仓基金（分组 / 加减仓 / 批量导入）
-│   │   ├── login/           PIN 码设置与解锁
-│   │   └── detail/          基金详情（净值走势）
-│   ├── utils/
-│   │   ├── api.js           行情请求（直连东方财富）
-│   │   ├── store.js         本地数据层（持仓/自选/分组/净值/PIN）
-│   │   ├── data.js          内置指数与 ETF 清单、演示数据、搜索
-│   │   └── util.js          格式化、批量导入解析、提示
-│   └── images/             tabBar 图标
+├── app.js / app.json / app.wxss
+├── sitemap.json
+├── pages/
+│   ├── index/           今日行情（大盘指数 / 全部基金 / ETF）
+│   ├── watch/           我的自选（自选指数 / 自选基金）
+│   ├── holdings/        持仓基金（分组 / 加减仓 / 批量导入）
+│   ├── login/           PIN 码设置与解锁
+│   └── detail/          基金详情（净值走势）
+├── utils/
+│   ├── api.js           行情请求（直连东方财富）
+│   ├── store.js         本地数据层（持仓/自选/分组/净值/PIN）
+│   ├── data.js          内置指数与 ETF 清单、演示数据、搜索
+│   └── util.js          格式化、批量导入解析、提示
+├── images/              tabBar 图标
 ├── test/core.test.mjs       核心逻辑自测（Node，模拟 my.* API）
 ├── tools/make-icons.py      生成 tabBar 图标
 └── docs/                    接入与发布说明
@@ -63,7 +65,7 @@ fund-miniapp/
 
 ## 开发与调试
 
-1. 用**支付宝开发者工具**打开本目录（`miniprogramRoot` 已指向 `miniprogram/`）。
+1. 用**支付宝开发者工具**打开本目录（`miniprogramRoot` 为 `./`）。
 2. 在 `project.config.json` 里填入自己的小程序 `appid`。
 3. 运行核心逻辑自测（不需要开发者工具）：
 

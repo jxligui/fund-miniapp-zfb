@@ -19,8 +19,8 @@ global.my = {
 };
 global.wx = { navigateTo() {}, navigateBack() {}, switchTab() {} };
 
-const store = await import('../miniprogram/utils/store.js');
-const util = await import('../miniprogram/utils/util.js');
+const store = await import('../utils/store.js');
+const util = await import('../utils/util.js');
 
 // 1. PIN 设置与校验
 assert.equal(store.hasPin(), false);

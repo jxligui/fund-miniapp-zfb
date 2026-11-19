@@ -17,7 +17,7 @@ global.my = {
   },
 };
 
-const api = await import('../miniprogram/utils/api.js');
+const api = await import('../utils/api.js');
 
 const q = await api.fetchFundQuote('000001');
 console.log('基金净值解析:', q && q.code === '000001' && q.nav === 0.96 && q.prevNav === 0.951 && q.pct === 0.95 && q.date === '2026-11-18' ? 'OK' : 'FAIL ' + JSON.stringify(q));

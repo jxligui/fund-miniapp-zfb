@@ -1,26 +1,19 @@
-import { fetchMarketQuotes, fetchFundQuotes } from '../../utils/api.js';
-import { INDEX_LIBRARY } from '../../utils/data.js';
+import { fetchMarketQuotes, fetchFundQuotes } from '../utils/api.js';
+import { INDEX_LIBRARY } from '../utils/data.js';
 import {
-  listHoldings, listWatchedIndices, setWatchedIndices, setWatch, removeHolding,
-  upsertHolding, navOf, buildPortfolio,
-} from '../../utils/store.js';
-import { money, pct, signedMoney, signColor, toast, confirm } from '../../utils/util.js';
+  listHoldings, listWatchedIndices, setWatchedIndices, removeHolding, buildPortfolio,
+} from '../utils/store.js';
+import { money, pct, signedMoney, signColor, toast, confirm } from '../utils/util.js';
 
 Page({
   data: {
     sub: 'index',
     indices: [],
     funds: [],
-    holdings: [],
     totals: {},
   },
 
-  onLoad() {
-    this.setData({ holdings: listHoldings() });
-  },
-
   onShow() {
-    this.setData({ holdings: listHoldings() });
     this.load();
   },
 
@@ -70,7 +63,7 @@ Page({
     for (const code in quotes) {
       const q = quotes[code];
       // 缓存净值，便于持仓金额离线计算
-      const store = require('../../utils/store.js');
+      const store = require('../utils/store.js');
       store.putNav(code, { date: q.date, nav: q.nav, prevNav: q.prevNav, pct: q.pct });
     }
     const { rows } = buildPortfolio(watchFunds, quotes);
@@ -110,7 +103,6 @@ Page({
     if (!ok) return;
     removeHolding(code);
     toast('已取消自选');
-    this.setData({ holdings: listHoldings() });
     this.load();
   },
 

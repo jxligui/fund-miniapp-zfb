@@ -2,8 +2,8 @@
   "compileType": "miniprogram",
   "libVersion": "3.5.0",
   "appid": "2021000000000000",
-  "projectname": "fund-miniapp",
-  "miniprogramRoot": "miniprogram/",
+  "projectname": "fund-miniapp-zfb",
+  "miniprogramRoot": "./",
   "setting": {
     "urlCheck": true,
     "es6": true,
