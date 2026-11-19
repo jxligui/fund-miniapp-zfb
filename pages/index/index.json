@@ -1,5 +1,4 @@
 {
-  "navigationBarTitleText": "今日行情",
-  "usingComponents": {},
-  "enablePullDownRefresh": true
+  "defaultTitle": "今日行情",
+  "usingComponents": {}
 }

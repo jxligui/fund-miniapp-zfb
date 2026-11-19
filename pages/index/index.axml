@@ -1,25 +1,25 @@
 <view class="page">
   <view class="sub-tabs">
-    <view class="sub-tab {{sub === 'index' ? 'on' : ''}}" data-sub="index" bindtap="switchSub">大盘指数</view>
-    <view class="sub-tab {{sub === 'fund' ? 'on' : ''}}" data-sub="fund" bindtap="switchSub">全部基金</view>
-    <view class="sub-tab {{sub === 'etf' ? 'on' : ''}}" data-sub="etf" bindtap="switchSub">ETF 基金</view>
+    <view class="sub-tab {{sub === 'index' ? 'on' : ''}}" data-sub="index" onTap="switchSub">大盘指数</view>
+    <view class="sub-tab {{sub === 'fund' ? 'on' : ''}}" data-sub="fund" onTap="switchSub">全部基金</view>
+    <view class="sub-tab {{sub === 'etf' ? 'on' : ''}}" data-sub="etf" onTap="switchSub">ETF 基金</view>
   </view>
 
   <!-- 大盘指数 -->
-  <block wx:if="{{sub === 'index'}}">
+  <block a:if="{{sub === 'index'}}">
     <view class="toolbar">
       <text class="hint" style="flex:1">共 {{indices.length}} 个指数 / 第 {{indexPage}} 页</text>
-      <button class="btn small" bindtap="prevIndexPage" disabled="{{indexPage <= 1}}">上一页</button>
-      <button class="btn small" bindtap="nextIndexPage" disabled="{{indexPage >= indexPages}}">下一页</button>
+      <button class="btn small" onTap="prevIndexPage" disabled="{{indexPage <= 1}}">上一页</button>
+      <button class="btn small" onTap="nextIndexPage" disabled="{{indexPage >= indexPages}}">下一页</button>
     </view>
 
-    <view class="card idx-card" wx:for="{{indices}}" wx:key="code">
+    <view class="card idx-card" a:for="{{indices}}" a:key="code">
       <view class="idx-head">
         <view>
           <view class="idx-name">{{item.name}}</view>
           <view class="idx-meta">{{item.code}} · {{item.category}}</view>
         </view>
-        <text class="watch-star {{item.watched ? 'on' : ''}}" data-code="{{item.code}}" data-name="{{item.name}}" catchtap="toggleIndexWatch">
+        <text class="watch-star {{item.watched ? 'on' : ''}}" data-code="{{item.code}}" data-name="{{item.name}}" catchTap="toggleIndexWatch">
           {{item.watched ? '★' : '☆'}}
         </text>
       </view>
@@ -30,27 +30,27 @@
       <view class="idx-chg" style="color:{{item.color}}">涨跌额 {{item.changeAmt}}</view>
     </view>
 
-    <view class="empty" wx:if="{{!loading && indices.length === 0}}">加载中…</view>
+    <view class="empty" a:if="{{!loading && indices.length === 0}}">加载中…</view>
   </block>
 
   <!-- 全部基金 -->
-  <block wx:if="{{sub === 'fund'}}">
+  <block a:if="{{sub === 'fund'}}">
     <view class="toolbar">
-      <input class="input" style="flex:1;margin:0" placeholder="搜索代码 / 名称 / 拼音" value="{{fundQuery}}" bindinput="onFundQuery" />
+      <input class="input" style="flex:1;margin:0" placeholder="搜索代码 / 名称 / 拼音" value="{{fundQuery}}" onInput="onFundQuery" />
     </view>
-    <view class="toolbar" wx:if="{{fundTypes.length > 1}}">
+    <view class="toolbar" a:if="{{fundTypes.length > 1}}">
       <scroll-view scroll-x style="white-space:nowrap;flex:1">
-        <text class="group-tab {{fundType === 'all' ? 'on' : ''}}" data-type="all" bindtap="onFundType">全部</text>
-        <text class="group-tab {{fundType === item ? 'on' : ''}}" wx:for="{{fundTypes}}" wx:key="*this" data-type="{{item}}" bindtap="onFundType">{{item}}</text>
+        <text class="group-tab {{fundType === 'all' ? 'on' : ''}}" data-type="all" onTap="onFundType">全部</text>
+        <text class="group-tab {{fundType === item ? 'on' : ''}}" a:for="{{fundTypes}}" a:key="*this" data-type="{{item}}" onTap="onFundType">{{item}}</text>
       </scroll-view>
     </view>
     <view class="toolbar">
       <text class="hint" style="flex:1">第 {{fundPage}} / {{fundPages}} 页</text>
-      <button class="btn small" bindtap="prevFundPage" disabled="{{fundPage <= 1}}">上一页</button>
-      <button class="btn small" bindtap="nextFundPage" disabled="{{fundPage >= fundPages}}">下一页</button>
+      <button class="btn small" onTap="prevFundPage" disabled="{{fundPage <= 1}}">上一页</button>
+      <button class="btn small" onTap="nextFundPage" disabled="{{fundPage >= fundPages}}">下一页</button>
     </view>
 
-    <view class="list-row" wx:for="{{funds}}" wx:key="code">
+    <view class="list-row" a:for="{{funds}}" a:key="code">
       <view>
         <view class="name">{{item.name}} <text class="tag">{{item.type}}</text></view>
         <view class="sub">{{item.code}} · 净值 {{item.nav}}</view>
@@ -61,14 +61,14 @@
       </view>
     </view>
 
-    <view class="empty" wx:if="{{!loading && funds.length === 0}}">
+    <view class="empty" a:if="{{!loading && funds.length === 0}}">
       暂无结果。输入基金代码或名称搜索，或在「我的自选 / 持仓基金」中添加。
     </view>
   </block>
 
   <!-- ETF -->
-  <block wx:if="{{sub === 'etf'}}">
-    <view class="list-row" wx:for="{{etfs}}" wx:key="code">
+  <block a:if="{{sub === 'etf'}}">
+    <view class="list-row" a:for="{{etfs}}" a:key="code">
       <view>
         <view class="name">{{item.name}} <text class="tag brand">{{item.theme}}</text></view>
         <view class="sub">{{item.code}} · 成交额 {{item.amount}}</view>
@@ -78,6 +78,6 @@
         <view style="color:{{item.color}}">{{item.changePct}}</view>
       </view>
     </view>
-    <view class="empty" wx:if="{{!loading && etfs.length === 0}}">加载中…</view>
+    <view class="empty" a:if="{{!loading && etfs.length === 0}}">加载中…</view>
   </block>
 </view>

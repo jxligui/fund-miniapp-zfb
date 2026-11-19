@@ -1,5 +1,4 @@
 {
-  "navigationBarTitleText": "我的自选",
-  "usingComponents": {},
-  "enablePullDownRefresh": true
+  "defaultTitle": "我的自选",
+  "usingComponents": {}
 }

@@ -1,16 +1,16 @@
 <view class="page">
   <!-- PIN 解锁遮罩 -->
-  <view class="lock-mask" wx:if="{{!unlocked}}">
+  <view class="lock-mask" a:if="{{!unlocked}}">
     <view class="lock-box">
       <view class="lock-title">持仓基金已锁定</view>
       <view class="lock-sub">请输入本地密码查看持仓数据</view>
       <input class="input" type="number" password maxlength="8" placeholder="请输入密码"
-        value="{{pinInput}}" bindinput="onUnlockInput" />
-      <button class="btn primary" style="width:100%" bindtap="unlock">解锁</button>
+        value="{{pinInput}}" onInput="onUnlockInput" />
+      <button class="btn primary" style="width:100%" onTap="unlock">解锁</button>
     </view>
   </view>
 
-  <block wx:else>
+  <block a:else>
     <!-- 总览 -->
     <view class="overview">
       <view class="ov-cell">
@@ -33,39 +33,39 @@
 
     <!-- 分组栏 -->
     <scroll-view scroll-x class="group-bar" style="white-space:nowrap">
-      <text class="group-tab {{activeGroup === item.key ? 'on' : ''}}" wx:for="{{groupTabs}}" wx:key="key"
-        data-key="{{item.key}}" bindtap="switchGroup">{{item.name}} ({{item.count}})</text>
-      <text class="group-tab" bindtap="openGroupMgr">⚙ 管理</text>
+      <text class="group-tab {{activeGroup === item.key ? 'on' : ''}}" a:for="{{groupTabs}}" a:key="key"
+        data-key="{{item.key}}" onTap="switchGroup">{{item.name}} ({{item.count}})</text>
+      <text class="group-tab" onTap="openGroupMgr">⚙ 管理</text>
     </scroll-view>
 
     <!-- 工具条 -->
     <view class="toolbar">
       <text class="hint" style="flex:1">持仓 {{visible.length}} 只</text>
-      <button class="btn small primary" bindtap="openAdd">＋ 添加</button>
-      <button class="btn small" bindtap="openImport">批量导入</button>
-      <button class="btn small" bindtap="refresh">刷新</button>
+      <button class="btn small primary" onTap="openAdd">＋ 添加</button>
+      <button class="btn small" onTap="openImport">批量导入</button>
+      <button class="btn small" onTap="refresh">刷新</button>
     </view>
 
     <!-- 未分组时提供批量分配 -->
-    <view class="toolbar" wx:if="{{activeGroup === '__none__' && visible.length > 0}}">
+    <view class="toolbar" a:if="{{activeGroup === '__none__' && visible.length > 0}}">
       <text class="hint" style="flex:1">已选 {{checked.length}} 只</text>
-      <button class="btn small" bindtap="selectAll">全选/全不选</button>
-      <button class="btn small primary" bindtap="batchAssign">批量分配</button>
+      <button class="btn small" onTap="selectAll">全选/全不选</button>
+      <button class="btn small primary" onTap="batchAssign">批量分配</button>
     </view>
 
     <!-- 持仓卡片 -->
-    <view class="card hold-card" wx:for="{{visible}}" wx:key="code">
+    <view class="card hold-card" a:for="{{visible}}" a:key="code">
       <view class="hold-title">
         <view style="flex:1">
-          <view class="hold-name" data-code="{{item.code}}" data-name="{{item.name}}" bindtap="goDetail">
+          <view class="hold-name" data-code="{{item.code}}" data-name="{{item.name}}" onTap="goDetail">
             {{item.name}}
-            <text class="tag brand" wx:if="{{item.watch}}">自选</text>
-            <text class="tag warn" wx:if="{{item.pending}}">待确认 ¥{{item.pendingText}}</text>
-            <text class="tag" wx:if="{{item.usingYesterday}}">按昨日净值</text>
+            <text class="tag brand" a:if="{{item.watch}}">自选</text>
+            <text class="tag warn" a:if="{{item.pending}}">待确认 ¥{{item.pendingText}}</text>
+            <text class="tag" a:if="{{item.usingYesterday}}">按昨日净值</text>
           </view>
           <view class="idx-meta">
             {{item.code}}
-            <text wx:if="{{item.groupName}}"> · {{item.groupName}}</text>
+            <text a:if="{{item.groupName}}"> · {{item.groupName}}</text>
           </view>
         </view>
         <view>
@@ -82,102 +82,102 @@
       </view>
 
       <view class="btn-row">
-        <button class="btn small primary" data-code="{{item.code}}" data-name="{{item.name}}" data-mode="add" catchtap="openTrade">＋ 加仓</button>
-        <button class="btn small" data-code="{{item.code}}" data-name="{{item.name}}" data-mode="reduce" catchtap="openTrade">－ 减仓</button>
-        <button class="btn small" data-code="{{item.code}}" catchtap="openMove">▦ 分组</button>
-        <button class="btn small danger" data-code="{{item.code}}" data-name="{{item.name}}" catchtap="removeHolding">删除</button>
+        <button class="btn small primary" data-code="{{item.code}}" data-name="{{item.name}}" data-mode="add" catchTap="openTrade">＋ 加仓</button>
+        <button class="btn small" data-code="{{item.code}}" data-name="{{item.name}}" data-mode="reduce" catchTap="openTrade">－ 减仓</button>
+        <button class="btn small" data-code="{{item.code}}" catchTap="openMove">▦ 分组</button>
+        <button class="btn small danger" data-code="{{item.code}}" data-name="{{item.name}}" catchTap="removeHolding">删除</button>
       </view>
     </view>
 
-    <view class="empty" wx:if="{{visible.length === 0}}">
+    <view class="empty" a:if="{{visible.length === 0}}">
       暂无持仓基金。点击「＋ 添加」按金额添加，或用「批量导入」粘贴「基金代码 金额」。
     </view>
   </block>
 
   <!-- 添加/编辑弹层 -->
-  <view class="modal" wx:if="{{showAdd}}">
-    <view class="modal-mask" bindtap="closeAdd"></view>
+  <view class="modal" a:if="{{showAdd}}">
+    <view class="modal-mask" onTap="closeAdd"></view>
     <view class="modal-body">
       <view class="modal-title">添加基金（按金额）</view>
       <view class="field-label">基金（代码或名称搜索）</view>
-      <input class="input" placeholder="如 000001 或 华夏成长" value="{{query}}" bindinput="onQuery" />
-      <view class="suggest" wx:for="{{suggest}}" wx:key="code" data-code="{{item.code}}" data-name="{{item.name}}" bindtap="pickSuggest">
+      <input class="input" placeholder="如 000001 或 华夏成长" value="{{query}}" onInput="onQuery" />
+      <view class="suggest" a:for="{{suggest}}" a:key="code" data-code="{{item.code}}" data-name="{{item.name}}" onTap="pickSuggest">
         <text>{{item.name}}</text><text class="idx-meta">{{item.code}}</text>
       </view>
       <view class="field-label">金额（元）</view>
-      <input class="input" type="digit" placeholder="如 1000" value="{{amount}}" bindinput="onAmount" />
+      <input class="input" type="digit" placeholder="如 1000" value="{{amount}}" onInput="onAmount" />
       <view class="hint">份额 = 金额 ÷ 最新净值，成本价取该净值；取不到净值时会记为待确认。</view>
       <view class="btn-row">
-        <button class="btn primary" bindtap="saveAmount">保存</button>
-        <button class="btn" bindtap="closeAdd">取消</button>
+        <button class="btn primary" onTap="saveAmount">保存</button>
+        <button class="btn" onTap="closeAdd">取消</button>
       </view>
     </view>
   </view>
 
   <!-- 加减仓弹层 -->
-  <view class="modal" wx:if="{{showTrade}}">
-    <view class="modal-mask" bindtap="closeTrade"></view>
+  <view class="modal" a:if="{{showTrade}}">
+    <view class="modal-mask" onTap="closeTrade"></view>
     <view class="modal-body">
       <view class="modal-title">{{tradeMode === 'add' ? '加仓' : '减仓'}} · {{tradeName}}</view>
       <view class="field-label">金额（元）</view>
-      <input class="input" type="digit" placeholder="如 500" value="{{amount}}" bindinput="onAmount" />
+      <input class="input" type="digit" placeholder="如 500" value="{{amount}}" onInput="onAmount" />
       <view class="hint">按最新净值折算份额后加/减到持仓。</view>
       <view class="btn-row">
-        <button class="btn primary" bindtap="saveTrade">确定</button>
-        <button class="btn" bindtap="closeTrade">取消</button>
+        <button class="btn primary" onTap="saveTrade">确定</button>
+        <button class="btn" onTap="closeTrade">取消</button>
       </view>
     </view>
   </view>
 
   <!-- 批量导入 -->
-  <view class="modal" wx:if="{{showImport}}">
-    <view class="modal-mask" bindtap="closeImport"></view>
+  <view class="modal" a:if="{{showImport}}">
+    <view class="modal-mask" onTap="closeImport"></view>
     <view class="modal-body">
       <view class="modal-title">批量导入（基金代码 + 金额）</view>
       <view class="hint">每行一只，例如：000001 1000 / 161725 500.50</view>
-      <textarea class="textarea" value="{{importText}}" bindinput="onImportText"
+      <textarea class="textarea" value="{{importText}}" onInput="onImportText"
         placeholder="000001 1000&#10;161725 500.50&#10;005827 2000"></textarea>
       <view class="btn-row">
-        <button class="btn primary" bindtap="doImport">导入</button>
-        <button class="btn" bindtap="closeImport">取消</button>
+        <button class="btn primary" onTap="doImport">导入</button>
+        <button class="btn" onTap="closeImport">取消</button>
       </view>
     </view>
   </view>
 
   <!-- 分组管理 -->
-  <view class="modal" wx:if="{{showGroupMgr}}">
-    <view class="modal-mask" bindtap="closeGroupMgr"></view>
+  <view class="modal" a:if="{{showGroupMgr}}">
+    <view class="modal-mask" onTap="closeGroupMgr"></view>
     <view class="modal-body">
       <view class="modal-title">自定义分组</view>
       <view class="field-label">新建分组</view>
-      <input class="input" placeholder="分组名称" value="{{newGroupName}}" bindinput="onNewGroupName" />
-      <button class="btn primary small" bindtap="createGroup">新建</button>
+      <input class="input" placeholder="分组名称" value="{{newGroupName}}" onInput="onNewGroupName" />
+      <button class="btn primary small" onTap="createGroup">新建</button>
 
-      <view class="group-item" wx:for="{{groups}}" wx:key="*this">
+      <view class="group-item" a:for="{{groups}}" a:key="*this">
         <input class="input" style="flex:1;margin:0" value="{{renameTarget === item ? renameValue : item}}"
-          data-name="{{item}}" bindinput="onRenameValue" bindfocus="startRename" />
-        <button class="btn small" data-name="{{item}}" bindtap="doRename">改名</button>
-        <button class="btn small danger" data-name="{{item}}" bindtap="deleteGroup">删除</button>
+          data-name="{{item}}" onInput="onRenameValue" onFocus="startRename" />
+        <button class="btn small" data-name="{{item}}" onTap="doRename">改名</button>
+        <button class="btn small danger" data-name="{{item}}" onTap="deleteGroup">删除</button>
       </view>
       <view class="hint">删除分组后其中的基金变为「未分组」，不会删除基金。</view>
-      <view class="btn-row"><button class="btn" bindtap="closeGroupMgr">关闭</button></view>
+      <view class="btn-row"><button class="btn" onTap="closeGroupMgr">关闭</button></view>
     </view>
   </view>
 
   <!-- 移动到分组 -->
-  <view class="modal" wx:if="{{showMove}}">
-    <view class="modal-mask" bindtap="closeMove"></view>
+  <view class="modal" a:if="{{showMove}}">
+    <view class="modal-mask" onTap="closeMove"></view>
     <view class="modal-body">
       <view class="modal-title">移到分组 · {{tradeName}}</view>
-      <view class="group-item" data-key="__none__" bindtap="onMoveTarget">
+      <view class="group-item" data-key="__none__" onTap="onMoveTarget">
         <text class="move-pick {{moveTarget === '__none__' ? 'on' : ''}}">未分组</text>
       </view>
-      <view class="group-item" wx:for="{{groups}}" wx:key="*this" data-key="{{item}}" bindtap="onMoveTarget">
+      <view class="group-item" a:for="{{groups}}" a:key="*this" data-key="{{item}}" onTap="onMoveTarget">
         <text class="move-pick {{moveTarget === item ? 'on' : ''}}">{{item}}</text>
       </view>
       <view class="btn-row">
-        <button class="btn primary" bindtap="confirmMove">确定</button>
-        <button class="btn" bindtap="closeMove">取消</button>
+        <button class="btn primary" onTap="confirmMove">确定</button>
+        <button class="btn" onTap="closeMove">取消</button>
       </view>
     </view>
   </view>

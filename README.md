@@ -43,8 +43,8 @@
 
 ```
 fund-miniapp-zfb/
-├── project.config.json      支付宝开发者工具项目配置
-├── app.js / app.json / app.wxss
+├── mini.project.json       支付宝开发者工具项目配置
+├── app.js / app.json / app.acss
 ├── sitemap.json
 ├── pages/
 │   ├── index/           今日行情（大盘指数 / 全部基金 / ETF）
@@ -63,10 +63,13 @@ fund-miniapp-zfb/
 └── docs/                    接入与发布说明
 ```
 
+> 每个页面由 4 个同名文件组成：`index.js` / `index.json` / `index.axml`（模板）/ `index.acss`（样式）。
+> 这是**支付宝**小程序的扩展名（微信用的是 `.wxml` / `.wxss`）。
+
 ## 开发与调试
 
 1. 用**支付宝开发者工具**打开本目录（`miniprogramRoot` 为 `./`）。
-2. 在 `project.config.json` 里填入自己的小程序 `appid`。
+2. 在 `mini.project.json` 里填入自己的小程序 `appid`。
 3. 运行核心逻辑自测（不需要开发者工具）：
 
    ```powershell

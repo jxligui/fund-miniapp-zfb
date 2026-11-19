@@ -1,5 +1,4 @@
 {
-  "navigationBarTitleText": "基金详情",
-  "usingComponents": {},
-  "enablePullDownRefresh": true
+  "defaultTitle": "基金详情",
+  "usingComponents": {}
 }

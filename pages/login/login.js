@@ -35,7 +35,7 @@ Page({
       setPin(pin);
       toast('密码已设置');
       this.setData({ pin: '', pin2: '', error: '' });
-      wx.switchTab({ url: '/pages/index/index' });
+      my.switchTab({ url: '/pages/index/index' });
       return;
     }
     if (!verifyPin(pin)) {
@@ -44,7 +44,7 @@ Page({
       return;
     }
     this.setData({ pin: '', error: '' });
-    wx.switchTab({ url: '/pages/index/index' });
+    my.switchTab({ url: '/pages/index/index' });
   },
 
   onReset() {

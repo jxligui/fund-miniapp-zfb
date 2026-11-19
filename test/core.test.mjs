@@ -17,7 +17,6 @@ global.my = {
     success({ statusCode: 200, data: {} });
   },
 };
-global.wx = { navigateTo() {}, navigateBack() {}, switchTab() {} };
 
 const store = await import('../utils/store.js');
 const util = await import('../utils/util.js');

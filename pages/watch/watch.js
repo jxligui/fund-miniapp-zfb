@@ -1,7 +1,7 @@
 import { fetchMarketQuotes, fetchFundQuotes } from '../utils/api.js';
 import { INDEX_LIBRARY } from '../utils/data.js';
 import {
-  listHoldings, listWatchedIndices, setWatchedIndices, removeHolding, buildPortfolio,
+  listHoldings, listWatchedIndices, setWatchedIndices, removeHolding, buildPortfolio, putNav,
 } from '../utils/store.js';
 import { money, pct, signedMoney, signColor, toast, confirm } from '../utils/util.js';
 
@@ -63,8 +63,7 @@ Page({
     for (const code in quotes) {
       const q = quotes[code];
       // 缓存净值，便于持仓金额离线计算
-      const store = require('../utils/store.js');
-      store.putNav(code, { date: q.date, nav: q.nav, prevNav: q.prevNav, pct: q.pct });
+      putNav(code, { date: q.date, nav: q.nav, prevNav: q.prevNav, pct: q.pct });
     }
     const { rows } = buildPortfolio(watchFunds, quotes);
     this.setData({
@@ -107,12 +106,12 @@ Page({
   },
 
   goHoldings() {
-    wx.switchTab({ url: '/pages/holdings/holdings' });
+    my.switchTab({ url: '/pages/holdings/holdings' });
   },
 
   goDetail(e) {
     const code = e.currentTarget.dataset.code;
     const name = e.currentTarget.dataset.name || '';
-    wx.navigateTo({ url: `/pages/detail/detail?code=${code}&name=${encodeURIComponent(name)}` });
+    my.navigateTo({ url: `/pages/detail/detail?code=${code}&name=${encodeURIComponent(name)}` });
   },
 });

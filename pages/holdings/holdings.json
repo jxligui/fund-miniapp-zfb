@@ -1,5 +1,4 @@
 {
-  "navigationBarTitleText": "持仓基金",
-  "usingComponents": {},
-  "enablePullDownRefresh": true
+  "defaultTitle": "持仓基金",
+  "usingComponents": {}
 }

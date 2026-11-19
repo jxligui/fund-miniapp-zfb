@@ -1,5 +1,5 @@
 import { fetchMarketQuotes, fetchFundQuotes } from '../utils/api.js';
-import { INDEX_LIBRARY, ETF_LIBRARY } from '../utils/data.js';
+import { INDEX_LIBRARY, ETF_LIBRARY, searchFundList } from '../utils/data.js';
 import { listHoldings, listWatchedIndices, setWatch, upsertHolding, setWatchedIndices } from '../utils/store.js';
 import { money, pct, signedMoney, signColor, compactAmt, debounce, toast } from '../utils/util.js';
 
@@ -155,7 +155,6 @@ Page({
     items = local.map(h => ({ code: h.code, name: h.name, type: '已添加' }));
 
     if (fundQuery.trim()) {
-      const { searchFundList } = require('../utils/data.js');
       const remote = await searchFundList(fundQuery.trim());
       const seen = new Set(items.map(x => x.code));
       for (const r of remote) if (!seen.has(r.code)) items.push(r);

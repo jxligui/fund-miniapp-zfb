@@ -1,4 +1,5 @@
 import { fetchFundQuotes } from '../utils/api.js';
+import { searchFundList } from '../utils/data.js';
 import {
   listHoldings, upsertHolding, removeHolding, moveToGroup, moveBatchToGroup,
   listGroups, addGroup, renameGroup, deleteGroup, buildPortfolio, putNav, navOf,
@@ -55,7 +56,7 @@ Page({
     if (!hasPin()) { this.setData({ unlocked: true }); return; }
     this.setData({ unlocked: my.getStorageSync(PIN_KEY) === '1' });
     if (!this.data.unlocked) {
-      wx.navigateTo({ url: '/pages/login/login' });
+      my.navigateTo({ url: '/pages/login/login' });
     }
   },
 
@@ -68,7 +69,7 @@ Page({
     if (!verifyPin(pin)) { toast('密码错误'); return; }
     my.setStorageSync(PIN_KEY, '1');
     this.setData({ unlocked: true });
-    wx.navigateBack();
+    my.navigateBack();
     this.refresh();
   },
 
@@ -153,7 +154,6 @@ Page({
     this.setData({ query: e.detail.value });
     if (!q) { this.setData({ suggest: [] }); return; }
     if (/^\d{6}$/.test(q)) { this.setData({ suggest: [] }); return; }
-    const { searchFundList } = require('../utils/data.js');
     searchFundList(q).then(list => this.setData({ suggest: list.slice(0, 10) }));
   },
 
@@ -369,6 +369,6 @@ Page({
   goDetail(e) {
     const code = e.currentTarget.dataset.code;
     const name = e.currentTarget.dataset.name || '';
-    wx.navigateTo({ url: `/pages/detail/detail?code=${code}&name=${encodeURIComponent(name)}` });
+    my.navigateTo({ url: `/pages/detail/detail?code=${code}&name=${encodeURIComponent(name)}` });
   },
 });

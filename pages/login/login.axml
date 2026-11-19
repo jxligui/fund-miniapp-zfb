@@ -17,7 +17,7 @@
       onConfirm="onSubmit"
     />
 
-    <block wx:if="{{mode === 'setup'}}">
+    <block a:if="{{mode === 'setup'}}">
       <input
         class="input pin-input"
         type="number"
@@ -31,14 +31,14 @@
       />
     </block>
 
-    <view class="err" wx:if="{{error}}">{{error}}</view>
+    <view class="err" a:if="{{error}}">{{error}}</view>
 
     <button class="btn primary login-btn" onClick="onSubmit">
       {{mode === 'setup' ? '设置密码并进入' : '解锁'}}
     </button>
 
     <view class="login-links">
-      <text wx:if="{{mode === 'unlock'}}" class="link" bindtap="onReset">忘记密码？</text>
+      <text a:if="{{mode === 'unlock'}}" class="link" onTap="onReset">忘记密码？</text>
     </view>
 
     <view class="login-tip">
