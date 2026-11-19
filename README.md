@@ -61,6 +61,33 @@
 基金库的数据来源：搜索基金时自动入库、添加持仓时自动入库，首次启动播种
 演示持仓。**因此离线也能检索基金**。
 
+### 默认测试数据
+
+首次启动自动播种（`utils/app.js` 的 `seedDemoData`）：
+
+- **持仓基金**（9 条，`utils/data.js#DEMO_HOLDINGS`）
+  - 6 只真实持仓：`000001` 华夏成长混合、`110022` 易方达消费行业股票、
+    `161725` 招商中证白酒指数(LOF)A、`519674` 银河创新成长混合A、
+    `270002` 广发稳健增长混合A、`005827` 易方达蓝筹精选混合
+  - 3 只纯自选（无份额）：`000021` 华夏优势增长混合、`512480` 半导体ETF、
+    `159928` 消费ETF
+  - 每条都带 `watch: true`，因此「我的自选 → 自选基金」首屏即有内容
+- **我的自选 → 大盘指数**（7 个，`utils/constants.js#DEFAULT_INDICES`）：
+  `000001` 上证指数、`399001` 深证成指、`399006` 创业板指、`000300` 沪深300、
+  `000905` 中证500、`000016` 上证50、`HSI` 恒生指数
+- **ETF 行情**：24 个主题 ETF（`ETF_LIBRARY`）
+
+所有默认数据的代码与名称都在东方财富接口上验证可取：
+
+```
+node test/demo-data-check.mjs   # 演示基金与 ETF -> 可取 8 / 8
+node test/library-check.mjs      # 指数 + ETF 清单 -> 可取 59 / 59
+```
+
+> **场外基金与 ETF 走不同接口**：场外基金用 `Fund_JJJZ_Data` 取净值；
+> ETF 在该接口查不到数据，`utils/api.js#fetchFundQuotes` 会自动改走
+> `push2` 实时行情接口，并把现价/昨收折算成统一的 `nav`/`prevNav`/`pct`。
+
 ## 目录结构
 
 小程序代码直接放在项目根目录（`miniprogramRoot` 为 `./`）：
@@ -85,7 +112,14 @@ fund-miniapp-zfb/
 │   ├── data.js          演示数据、搜索、清单引用
 │   └── util.js          格式化、批量导入解析、提示
 ├── images/              tabBar 图标
-├── test/core.test.mjs       核心逻辑自测（Node，模拟 my.* API）
+├── test/
+│   ├── core.test.mjs        核心逻辑自测（Node，模拟 my.* API）
+│   ├── e2e.test.mjs         端到端功能验证（播种 / 自选 / 持仓 / 设置 / 数据流）
+│   ├── etf-quote.test.mjs   ETF 行情接口路由验证
+│   ├── api-parse.test.mjs   行情解析（真实响应样本）
+│   ├── network-check.mjs    真实网络联调（各数据源可用性）
+│   ├── demo-data-check.mjs  默认测试数据可取性
+│   └── library-check.mjs    指数 + ETF 清单可取性
 ├── tools/make-icons.py      生成 tabBar 图标
 ├── tools/check-*.js         校验脚本（import 路径 / JSON schema / 微信残留 / text 嵌套）
 ├── tools/*-to-alipay.js     微信→支付宝 转换脚本
@@ -105,13 +139,18 @@ fund-miniapp-zfb/
 
 1. 用**支付宝开发者工具**打开本目录（`miniprogramRoot` 为 `./`）。
 2. 在 `mini.project.json` 里填入自己的小程序 `appid`。
-3. 运行核心逻辑自测（不需要开发者工具）：
+3. 运行自测与数据可用性校验（都不需要开发者工具）：
 
    ```powershell
-   node test/core.test.mjs
+   node test/core.test.mjs        # 核心逻辑（11 组）
+   node test/e2e.test.mjs         # 端到端功能（23 项）
+   node test/etf-quote.test.mjs   # ETF 行情路由（4 项）
+   node test/demo-data-check.mjs  # 默认测试数据可取性
+   node test/library-check.mjs    # 指数 + ETF 清单可取性
    ```
 
 4. 模拟器里首次进入「持仓基金」会要求设置 PIN 码（4-8 位数字），设置后即可使用。
+   首屏即可看到默认测试数据：持仓 9 条、自选指数 7 个、ETF 24 只。
 
 ## 发布上线
 

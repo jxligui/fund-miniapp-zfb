@@ -75,17 +75,68 @@ export async function fetchFundQuote(code) {
   }
 }
 
-/** 批量取基金行情（并发受限，逐个请求）。 */
+/**
+ * 批量取基金行情（并发受限，逐个请求）。
+ *
+ * ETF（场内基金）在东财净值接口查不到数据（接口只返回场外基金），
+ * 因此 ETF 走 push2 实时行情接口，并按 ETF 的涨跌价（现价 - 昨收）折算成
+ * 与场外基金一致的 { nav, prevNav, pct } 结构。
+ */
 export async function fetchFundQuotes(codes) {
   const out = {};
   const list = (codes || []).slice(0, 60);
+
+  // 1) ETF 用实时行情接口（按 secid 批量查）
+  const etfCodes = list.filter(isEtfCode);
+  const otherCodes = list.filter(c => !isEtfCode(c));
+  if (etfCodes.length) {
+    const secids = etfCodes.map(c => etfSecid(c)).filter(Boolean);
+    if (secids.length) {
+      const quotes = await fetchMarketQuotes(secids);
+      for (const q of quotes) {
+        if (!q.code) continue;
+        const nav = q.price;
+        const prevNav = q.prevClose;
+        out[q.code] = {
+          code: q.code,
+          name: q.name,
+          nav: nav,
+          prevNav: prevNav,
+          pct: q.changePct,
+          date: todayStr(),
+          amount: q.amount,
+        };
+      }
+    }
+  }
+
+  // 2) 场外基金走净值接口（并发受限，逐个请求）
   const CONCURRENCY = 5;
-  for (let i = 0; i < list.length; i += CONCURRENCY) {
-    const slice = list.slice(i, i + CONCURRENCY);
+  for (let i = 0; i < otherCodes.length; i += CONCURRENCY) {
+    const slice = otherCodes.slice(i, i + CONCURRENCY);
     const results = await Promise.all(slice.map(c => fetchFundQuote(c)));
     results.forEach((q, k) => { if (q) out[slice[k]] = q; });
   }
   return out;
+}
+
+/** 是否是 ETF（场内基金）—— 代码 5 开头（沪市）或 15 开头（深市） */
+function isEtfCode(code) {
+  const c = String(code || '');
+  return /^5\d{5}$/.test(c) || /^15\d{4}$/.test(c);
+}
+
+/** ETF 的行情 secid：沪市 1.xxxxxx，深市 0.xxxxxx */
+function etfSecid(code) {
+  const c = String(code || '');
+  if (/^5\d{5}$/.test(c)) return `1.${c}`;
+  if (/^15\d{4}$/.test(c)) return `0.${c}`;
+  return null;
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 /**

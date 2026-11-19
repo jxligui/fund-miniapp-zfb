@@ -20,7 +20,7 @@ export const DEMO_HOLDINGS = [
   { code: '519674', name: '银河创新成长混合A', shares: 300, cost: 8.0950, watch: true },
   { code: '270002', name: '广发稳健增长混合A', shares: 1500, cost: 1.4010, watch: true },
   { code: '005827', name: '易方达蓝筹精选混合', shares: 1000, cost: 1.4800, watch: true },
-  { code: '000021', name: '华夏成长混合(后端)', shares: null, cost: null, watch: true },
+  { code: '000021', name: '华夏优势增长混合', shares: null, cost: null, watch: true },
   { code: '512480', name: '半导体ETF', shares: null, cost: null, watch: true },
   { code: '159928', name: '消费ETF', shares: null, cost: null, watch: true },
 ];

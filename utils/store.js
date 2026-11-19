@@ -141,9 +141,12 @@ export function verifyMasterPassword(pwd) {
 /**
  * 统一的解锁校验：先判本机 PIN，再判万能密码。
  * 返回 'pin' | 'master' | 'none'
+ *
+ * 注意：未设置 PIN 时 verifyPin 会放行（首次使用无需密码），
+ * 这里必须显式跳过 PIN 分支，否则会抢先于万能密码返回 'pin'。
  */
 export function verifyAnyPassword(pwd) {
-  if (verifyPin(pwd)) return 'pin';
+  if (hasPin() && verifyPin(pwd)) return 'pin';
   if (verifyMasterPassword(pwd)) return 'master';
   return 'none';
 }
