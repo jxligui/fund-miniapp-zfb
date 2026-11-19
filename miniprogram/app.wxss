@@ -1,0 +1,183 @@
+page {
+  background: #f5f6f8;
+  font-size: 28rpx;
+  color: #262626;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+}
+
+.page {
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* 顶部导航条 */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  background: #ffffff;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.nav-title { font-size: 32rpx; font-weight: 600; }
+.nav-action { font-size: 26rpx; color: #1677ff; }
+
+/* 二级标签栏 */
+.sub-tabs {
+  display: flex;
+  gap: 8rpx;
+  padding: 12rpx 24rpx;
+  background: #ffffff;
+  border-bottom: 1rpx solid #f0f0f0;
+  white-space: nowrap;
+}
+.sub-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx 0;
+  font-size: 26rpx;
+  color: #8c8c8c;
+  background: #f5f6f8;
+  border-radius: 12rpx;
+}
+.sub-tab.on { color: #1677ff; background: #e6f0ff; font-weight: 600; }
+
+/* 卡片 */
+.card {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  margin: 16rpx 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+}
+.card-row { display: flex; align-items: center; justify-content: space-between; }
+
+/* 指数/基金卡片 */
+.idx-card { margin: 16rpx 24rpx; }
+.idx-head { display: flex; align-items: flex-start; justify-content: space-between; }
+.idx-name { font-size: 30rpx; font-weight: 600; }
+.idx-meta { font-size: 22rpx; color: #8c8c8c; margin-top: 4rpx; }
+.idx-price-row { display: flex; align-items: baseline; margin-top: 12rpx; }
+.idx-price { font-size: 44rpx; font-weight: 700; font-variant-numeric: tabular-nums; }
+.idx-pct {
+  margin-left: 16rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+  background: #f5f6f8;
+  color: #8c8c8c;
+}
+.idx-pct.up { background: #f5222d; color: #ffffff; }
+.idx-pct.down { background: #52c41a; color: #ffffff; }
+.idx-chg { font-size: 24rpx; color: #8c8c8c; margin-top: 4rpx; }
+.idx-grid { display: flex; flex-wrap: wrap; margin-top: 16rpx; padding-top: 14rpx; border-top: 1rpx solid #f5f6f8; }
+.idx-kv { width: 50%; display: flex; justify-content: space-between; font-size: 22rpx; color: #8c8c8c; padding: 4rpx 0; }
+.idx-kv b { color: #262626; font-weight: 600; }
+
+/* 持仓卡片 */
+.hold-card { margin: 12rpx 24rpx; }
+.hold-title { display: flex; align-items: center; justify-content: space-between; }
+.hold-name { font-size: 30rpx; font-weight: 600; }
+.hold-amount { font-size: 34rpx; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.hold-today { font-size: 24rpx; text-align: right; margin-top: 2rpx; }
+.hold-stats { display: flex; flex-wrap: wrap; margin-top: 12rpx; }
+.hold-stat { width: 50%; display: flex; justify-content: space-between; font-size: 22rpx; color: #8c8c8c; padding: 3rpx 0; }
+.hold-stat b { color: #262626; font-weight: 600; }
+
+/* 徽标 */
+.tag {
+  display: inline-block;
+  font-size: 20rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+  background: #f5f6f8;
+  color: #8c8c8c;
+  margin-left: 10rpx;
+}
+.tag.brand { background: #e6f0ff; color: #1677ff; }
+.tag.warn { background: #fff7e6; color: #fa8c16; }
+
+/* 按钮 */
+.btn {
+  font-size: 26rpx;
+  padding: 12rpx 28rpx;
+  border-radius: 12rpx;
+  background: #ffffff;
+  border: 1rpx solid #d9d9d9;
+  color: #262626;
+  line-height: 1.4;
+}
+.btn.primary { background: #1677ff; border-color: #1677ff; color: #ffffff; }
+.btn.danger { color: #f5222d; border-color: #ffa39e; }
+.btn.small { font-size: 24rpx; padding: 8rpx 20rpx; }
+.btn-row { display: flex; gap: 16rpx; flex-wrap: wrap; margin-top: 16rpx; }
+
+/* 列表行 */
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 24rpx;
+  background: #ffffff;
+  border-bottom: 1rpx solid #f5f6f8;
+}
+.list-row .name { font-size: 28rpx; font-weight: 500; }
+.list-row .sub { font-size: 22rpx; color: #8c8c8c; margin-top: 4rpx; }
+.list-row .right { text-align: right; }
+
+/* 总览 */
+.overview { display: flex; padding: 20rpx 24rpx; background: #ffffff; margin-bottom: 12rpx; }
+.ov-cell { flex: 1; text-align: center; }
+.ov-label { font-size: 22rpx; color: #8c8c8c; }
+.ov-value { font-size: 32rpx; font-weight: 700; margin-top: 4rpx; font-variant-numeric: tabular-nums; }
+.ov-value.big { font-size: 40rpx; }
+
+/* 分组栏 */
+.group-bar {
+  display: flex;
+  gap: 10rpx;
+  padding: 14rpx 24rpx;
+  background: #ffffff;
+  border-bottom: 1rpx solid #f0f0f0;
+  white-space: nowrap;
+}
+.group-tab {
+  font-size: 24rpx;
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  background: #f5f6f8;
+  color: #8c8c8c;
+}
+.group-tab.on { background: #1677ff; color: #ffffff; font-weight: 600; }
+
+/* 输入 */
+.input {
+  font-size: 28rpx;
+  padding: 18rpx 20rpx;
+  background: #f5f6f8;
+  border-radius: 12rpx;
+  margin: 12rpx 0;
+}
+.textarea {
+  font-size: 26rpx;
+  width: 100%;
+  height: 240rpx;
+  padding: 18rpx 20rpx;
+  background: #f5f6f8;
+  border-radius: 12rpx;
+  box-sizing: border-box;
+  margin: 12rpx 0;
+}
+.field-label { font-size: 24rpx; color: #8c8c8c; margin-top: 16rpx; }
+.hint { font-size: 22rpx; color: #8c8c8c; margin-top: 8rpx; line-height: 1.6; }
+
+/* 空状态 */
+.empty { text-align: center; color: #8c8c8c; font-size: 26rpx; padding: 80rpx 40rpx; line-height: 1.8; }
+
+/* 工具条 */
+.toolbar { display: flex; align-items: center; gap: 12rpx; padding: 16rpx 24rpx; background: #ffffff; }
+.toolbar .spacer { flex: 1; }
+
+/* 选择器 */
+.picker-inline { font-size: 26rpx; color: #1677ff; }

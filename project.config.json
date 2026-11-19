@@ -1,0 +1,44 @@
+{
+  "compileType": "miniprogram",
+  "libVersion": "3.5.0",
+  "appid": "2021000000000000",
+  "projectname": "fund-miniapp",
+  "miniprogramRoot": "miniprogram/",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true,
+    "coverView": true,
+    "nodeModules": false,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "scopeDataCheck": false,
+    "uglifyFileName": false,
+    "checkInvalidKey": true,
+    "checkSiteMap": true,
+    "uploadWithSourceMap": true,
+    "compileHotReLoad": false,
+    "lazyloadPlaceholderEnable": false,
+    "useMultiFrameRuntime": true,
+    "useApiHook": true,
+    "useApiHostProcess": true,
+    "enableAppxNetwork": true,
+    "showES6CompileOption": false,
+    "useCompilerModule": true,
+    "userConfirmedUseCompilerModuleSwitch": false,
+    "packNpmManually": false,
+    "ignoreUploadUnusedFiles": true
+  },
+  "condition": {
+    "miniprogram": {
+      "list": [
+        { "name": "今日行情", "pathName": "pages/index/index", "query": "", "scene": null },
+        { "name": "我的自选", "pathName": "pages/watch/watch", "query": "", "scene": null },
+        { "name": "持仓基金", "pathName": "pages/holdings/holdings", "query": "", "scene": null }
+      ]
+    }
+  }
+}

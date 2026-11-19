@@ -1,0 +1,48 @@
+<view class="page login-page">
+  <view class="login-box">
+    <view class="login-title">基金小助理</view>
+    <view class="login-sub">
+      {{mode === 'setup' ? '首次使用，请设置本地密码' : '请输入密码查看持仓基金'}}
+    </view>
+
+    <input
+      class="input pin-input"
+      type="number"
+      maxlength="8"
+      password
+      placeholder="{{mode === 'setup' ? '设置 4-8 位数字密码' : '请输入密码'}}"
+      value="{{pin}}"
+      data-key="pin"
+      onInput="onInput"
+      onConfirm="onSubmit"
+    />
+
+    <block wx:if="{{mode === 'setup'}}">
+      <input
+        class="input pin-input"
+        type="number"
+        maxlength="8"
+        password
+        placeholder="再次输入确认密码"
+        value="{{pin2}}"
+        data-key="pin2"
+        onInput="onInput"
+        onConfirm="onSubmit"
+      />
+    </block>
+
+    <view class="err" wx:if="{{error}}">{{error}}</view>
+
+    <button class="btn primary login-btn" onClick="onSubmit">
+      {{mode === 'setup' ? '设置密码并进入' : '解锁'}}
+    </button>
+
+    <view class="login-links">
+      <text wx:if="{{mode === 'unlock'}}" class="link" bindtap="onReset">忘记密码？</text>
+    </view>
+
+    <view class="login-tip">
+      密码仅保存在你的手机本地（不加密存储于本机），用于防止他人随手查看持仓；所有持仓、净值数据也只存在本机，不会上传服务器。
+    </view>
+  </view>
+</view>

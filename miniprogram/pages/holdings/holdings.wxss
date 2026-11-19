@@ -1,0 +1,78 @@
+/* 锁屏遮罩 */
+.lock-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.lock-box {
+  width: 600rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 48rpx 40rpx;
+}
+.lock-title { font-size: 34rpx; font-weight: 600; text-align: center; }
+.lock-sub { font-size: 24rpx; color: #8c8c8c; text-align: center; margin: 10rpx 0 20rpx; }
+
+/* 弹层 */
+.modal { position: fixed; inset: 0; z-index: 90; }
+.modal-mask { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); }
+.modal-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 86vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 28rpx 28rpx 0 0;
+  padding: 32rpx 32rpx 56rpx;
+  box-sizing: border-box;
+}
+.modal-title { font-size: 32rpx; font-weight: 600; margin-bottom: 12rpx; }
+
+/* 搜索建议 */
+.suggest {
+  background: #f5f6f8;
+  border-radius: 10rpx;
+  padding: 18rpx 20rpx;
+  font-size: 26rpx;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+/* 分组管理行 */
+.group-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+.move-pick {
+  font-size: 28rpx;
+  padding: 16rpx 24rpx;
+  border-radius: 12rpx;
+  background: #f5f6f8;
+  color: #595959;
+}
+.move-pick.on { background: #1677ff; color: #ffffff; font-weight: 600; }
+
+/* 勾选框 */
+.check-box {
+  width: 36rpx;
+  height: 36rpx;
+  border: 2rpx solid #d9d9d9;
+  border-radius: 8rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 24rpx;
+}
+.check-box.on { background: #1677ff; border-color: #1677ff; }
