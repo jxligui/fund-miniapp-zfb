@@ -2,19 +2,37 @@ import { fetchMarketQuotes, fetchFundQuotes } from '../../utils/api.js';
 import { INDEX_LIBRARY } from '../../utils/data.js';
 import {
   listHoldings, listWatchedIndices, setWatchedIndices, removeHolding, buildPortfolio, putNav,
+  autoRefreshMixin, markUpdated,
 } from '../../utils/store.js';
 import { money, pct, signedMoney, signColor, toast, confirm } from '../../utils/util.js';
 
 Page({
+  ...autoRefreshMixin(),
+
   data: {
     sub: 'index',
     indices: [],
     funds: [],
     totals: {},
+    expandedCode: '',   // 当前展开操作按钮的自选基金代码（'' = 全部折叠）
   },
 
   onShow() {
-    this.load();
+    this.resumeAutoRefresh();
+  },
+
+  onHide() {
+    this.stopAutoRefresh();
+  },
+
+  onUnload() {
+    this.stopAutoRefresh();
+  },
+
+  /** 定时刷新入口 */
+  refreshNow() {
+    markUpdated();
+    return this.load();
   },
 
   onPullDownRefresh() {
@@ -22,8 +40,14 @@ Page({
   },
 
   switchSub(e) {
-    this.setData({ sub: e.currentTarget.dataset.sub });
+    this.setData({ sub: e.currentTarget.dataset.sub, expandedCode: '' });
     this.load();
+  },
+
+  /** 展开/收起单张卡片的操作按钮（手风琴：同时只展开一张） */
+  toggleActions(e) {
+    const code = e.currentTarget.dataset.code;
+    this.setData({ expandedCode: this.data.expandedCode === code ? '' : code });
   },
 
   async load() {
@@ -102,6 +126,7 @@ Page({
     if (!ok) return;
     removeHolding(code);
     toast('已取消自选');
+    this.setData({ expandedCode: '' });
     this.load();
   },
 

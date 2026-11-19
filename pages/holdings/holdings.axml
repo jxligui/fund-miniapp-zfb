@@ -1,10 +1,12 @@
 <view class="page">
-  <!-- 总览 -->
+  <!-- 总览：总资产独占一行，三格指标 -->
   <view class="overview">
-      <view class="ov-cell">
-        <view class="ov-label"><text>总资产</text></view>
-        <view class="ov-value ov-value-big"><text>{{totals.amountText}}</text></view>
-      </view>
+    <view class="ov-main">
+      <view class="ov-label"><text>总资产（元）</text></view>
+      <view class="ov-value-big"><text>{{totals.amountText}}</text></view>
+      <view class="ov-sub" style="color:{{totals.todayColor}}"><text>今日 {{totals.todayText}}</text></view>
+    </view>
+    <view class="ov-row">
       <view class="ov-cell">
         <view class="ov-label"><text>今日盈亏</text></view>
         <view class="ov-value" style="color:{{totals.todayColor}}"><text>{{totals.todayText}}</text></view>
@@ -18,6 +20,7 @@
         <view class="ov-value" style="color:{{totals.profitColor}}"><text>{{totals.pctText}}</text></view>
       </view>
     </view>
+  </view>
 
     <!-- 分组栏 -->
     <scroll-view scroll-x class="group-bar" style="white-space:nowrap">
@@ -41,11 +44,11 @@
       <button class="btn btn-small btn-primary" onTap="batchAssign">批量分配</button>
     </view>
 
-    <!-- 持仓卡片 -->
+    <!-- 持仓卡片（操作默认折叠，点 ⋯ 展开） -->
     <view class="card hold-card" a:for="{{visible}}" a:key="code">
       <view class="hold-title">
-        <view style="flex:1">
-          <view class="hold-name" data-code="{{item.code}}" data-name="{{item.name}}" onTap="goDetail">
+        <view class="hold-info" data-code="{{item.code}}" data-name="{{item.name}}" onTap="goDetail">
+          <view class="hold-name">
             <text>{{item.name}}</text>
             <text class="tag tag-brand" a:if="{{item.watch}}">自选</text>
             <text class="tag tag-warn" a:if="{{item.pending}}">待确认 ¥{{item.pendingText}}</text>
@@ -56,10 +59,15 @@
             <text a:if="{{item.groupName}}"> · {{item.groupName}}</text>
           </view>
         </view>
-        <view>
+        <view class="hold-right">
           <view class="hold-amount"><text>{{item.amountText}}</text></view>
           <view class="hold-today" style="color:{{item.todayColor}}"><text>{{item.todayText}}</text></view>
         </view>
+        <text
+          class="hold-more {{expandedCode === item.code ? 'hold-more-on' : ''}}"
+          catchTap="toggleActions" data-code="{{item.code}}">
+          {{expandedCode === item.code ? '▲' : '▼'}}
+        </text>
       </view>
 
       <view class="hold-stats">
@@ -69,7 +77,7 @@
         <view class="hold-stat"><text>收益率</text><text class="hold-stat-value" style="color:{{item.profitColor}}">{{item.pctText}}</text></view>
       </view>
 
-      <view class="btn-row">
+      <view class="btn-row" a:if="{{expandedCode === item.code}}">
         <button class="btn btn-small btn-primary" data-code="{{item.code}}" data-name="{{item.name}}" data-mode="add" catchTap="openTrade">＋ 加仓</button>
         <button class="btn btn-small" data-code="{{item.code}}" data-name="{{item.name}}" data-mode="reduce" catchTap="openTrade">－ 减仓</button>
         <button class="btn btn-small" data-code="{{item.code}}" catchTap="openMove">▦ 分组</button>

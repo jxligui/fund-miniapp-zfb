@@ -36,6 +36,7 @@ const ALLOW = [
   'tools/wxml-to-axml.js',
   'tools/page-json-to-alipay.js',
   'README.md',
+  'AGENTS.md', // 指导文档，说明"微信写法 vs 支付宝写法"的差异，属合理提及
 ];
 const problems = [];
 

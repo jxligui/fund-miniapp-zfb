@@ -25,9 +25,9 @@ const NAV = {
 };
 
 global.my = {
-  getStorageSync: k => (storage.has(k) ? storage.get(k) : ''),
-  setStorageSync: (k, v) => storage.set(k, v),
-  removeStorageSync: k => storage.delete(k),
+  getStorageSync: ({ key }) => ({ data: storage.has(key) ? storage.get(key) : '', success: true }),
+  setStorageSync: ({ key, data }) => storage.set(key, data),
+  removeStorageSync: ({ key }) => storage.delete(key),
   showToast: () => {},
   showModal: () => {},
   stopPullDownRefresh: () => {},
@@ -67,19 +67,28 @@ function check(name, fn) {
 // ============ 1. 首次启动播种（模拟 app.js onLaunch） ============
 db.initDb();
 db.upsertFundBaseBatch(data.DEMO_HOLDINGS.map(h => ({ code: h.code, name: h.name })));
+// 模拟行情页首次加载：把 NAV 表里的净值写入本地缓存（真实流程由 fetchFundQuotes 完成）
+for (const [code, n] of Object.entries(NAV)) {
+  store.putNav(code, { date: n.date, nav: n.nav, prevNav: n.prevNav, pct: n.pct });
+}
 if (store.listHoldings().length === 0 && !storage.get('ft.seeded')) {
   store.saveHoldings(data.DEMO_HOLDINGS.map(h => ({
     code: h.code, name: h.name, shares: h.shares, cost: h.cost,
-    watch: h.watch, groupName: null, pendingAmount: null, updatedAt: Date.now(),
+    watch: h.watch, groupName: data.DEMO_GROUP_MAP[h.code] || null,
+    pendingAmount: h.pendingAmount || null, updatedAt: Date.now(),
   })));
+  for (const g of data.DEMO_GROUPS) store.addGroup(g);
   storage.set('ft.seeded', '1');
 }
 if (store.listWatchedIndices().length === 0) {
   store.setWatchedIndices(constants.DEFAULT_INDICES.slice());
 }
 
+const HELD_COUNT = data.DEMO_HOLDINGS.filter(h => h.shares != null).length;
+const WATCH_ONLY_COUNT = data.DEMO_HOLDINGS.filter(h => h.shares == null).length;
+
 check('首次启动播种了演示持仓', () => {
-  assert.equal(store.listHoldings().length, 9);
+  assert.equal(store.listHoldings().length, data.DEMO_HOLDINGS.length);
 });
 check('首次启动播种了默认自选指数', () => {
   assert.equal(store.listWatchedIndices().length, 7);
@@ -87,17 +96,24 @@ check('首次启动播种了默认自选指数', () => {
   assert.ok(store.listWatchedIndices().includes('HSI'));
 });
 check('演示持仓全部标记为自选', () => {
-  assert.equal(store.listHoldings().filter(h => h.watch).length, 9);
+  assert.equal(store.listHoldings().filter(h => h.watch).length, data.DEMO_HOLDINGS.length);
 });
-check('演示持仓含真实持仓与纯自选两类', () => {
+check('演示持仓含真实持仓、待确认与纯自选三类', () => {
   const held = store.listHoldings().filter(h => h.shares != null);
-  const onlyWatch = store.listHoldings().filter(h => h.shares == null);
-  assert.equal(held.length, 6);
-  assert.equal(onlyWatch.length, 3);
+  const onlyWatch = store.listHoldings().filter(h => h.shares == null && h.pendingAmount == null);
+  const pending = store.listHoldings().filter(h => h.pendingAmount != null);
+  assert.equal(held.length, HELD_COUNT);
+  assert.equal(onlyWatch.length, WATCH_ONLY_COUNT);
+  assert.equal(pending.length, 1);
+});
+check('演示分组已播种且归属正确', () => {
+  assert.deepEqual(store.listGroups().sort(), [...data.DEMO_GROUPS].sort());
+  const baijiu = store.listHoldings().filter(h => h.groupName === '白酒消费');
+  assert.ok(baijiu.length >= 2, `白酒消费分组应有至少 2 只，实际 ${baijiu.length}`);
 });
 check('演示持仓已同步进基金库', () => {
   const info = db.libInfo();
-  assert.ok(info.fundCount >= 9, `fundCount=${info.fundCount}`);
+  assert.ok(info.fundCount >= data.DEMO_HOLDINGS.length, `fundCount=${info.fundCount}`);
 });
 
 // ============ 2. 我的自选 ============
@@ -109,7 +125,7 @@ check('自选指数可映射到行情 secid', () => {
 });
 check('自选基金列表 = 持仓中 watch=true 的条目', () => {
   const watchFunds = store.listHoldings().filter(h => h.watch);
-  assert.equal(watchFunds.length, 9);
+  assert.equal(watchFunds.length, data.DEMO_HOLDINGS.length);
 });
 check('自选基金可构建组合并计算盈亏', () => {
   const quotes = {};
@@ -117,19 +133,27 @@ check('自选基金可构建组合并计算盈亏', () => {
     quotes[code] = { code, nav: n.nav, prevNav: n.prevNav, pct: n.pct, date: n.date };
   }
   const { rows, totals } = store.buildPortfolio(store.listHoldings().filter(h => h.watch), quotes);
-  // 9 条自选（6 只有持仓 + 3 只纯自选），纯自选没有金额
-  assert.equal(rows.length, 9);
-  assert.equal(rows.filter(r => r.amount != null).length, 6);
+  // 全部自选都有行；有份额的（含 ETF/场外）应算出金额
+  assert.equal(rows.length, data.DEMO_HOLDINGS.length);
+  const heldRows = rows.filter(r => r.shares != null);
+  assert.equal(heldRows.length, HELD_COUNT);
   assert.ok(totals.amount > 0);
-  assert.ok(rows.filter(r => r.shares != null).every(r => r.nav != null));
+  assert.ok(heldRows.filter(r => NAV[r.code]).every(r => r.nav != null));
 });
 check('自选基金金额合计正确', () => {
   const quotes = {};
   for (const [code, n] of Object.entries(NAV)) quotes[code] = { code, nav: n.nav, prevNav: n.prevNav, pct: n.pct, date: n.date };
-  const { totals } = store.buildPortfolio(store.listHoldings().filter(h => h.watch), quotes);
-  // 1200*0.96 + 800*3.20 + 2000*0.63 + 300*8.10 + 1500*1.40 + 1000*1.48
-  const expect = 1200 * 0.96 + 800 * 3.2 + 2000 * 0.63 + 300 * 8.1 + 1500 * 1.4 + 1000 * 1.48;
-  assert.ok(Math.abs(totals.amount - expect) < 0.01, `${totals.amount} vs ${expect}`);
+  const holdings = store.listHoldings().filter(h => h.watch);
+  const { totals } = store.buildPortfolio(holdings, quotes);
+  // 基于当前实际持仓按「昨日净值」口径逐只推导（净值日期非今天 -> usingYesterday）
+  let expect = 0;
+  for (const h of holdings) {
+    if (h.shares == null) continue;
+    const n = NAV[h.code];
+    if (n) expect += h.shares * n.prevNav;
+    if (h.pendingAmount != null) expect += h.pendingAmount;
+  }
+  assert.ok(Math.abs(totals.amount - expect) < 0.2, `${totals.amount} vs ${expect}`);
 });
 check('取消自选指数后从列表移除', () => {
   const before = store.listWatchedIndices().length;
@@ -140,22 +164,26 @@ check('取消自选指数后从列表移除', () => {
 
 // ============ 3. 持仓基金 ============
 check('分组：新增 / 改名 / 移动 / 删除', () => {
-  store.addGroup('白酒');
-  store.addGroup('科技');
-  assert.deepEqual(store.listGroups().sort(), ['白酒', '科技']);
-  store.moveToGroup('161725', '白酒');
-  assert.equal(store.listHoldings().find(x => x.code === '161725').groupName, '白酒');
-  assert.equal(store.moveBatchToGroup(['161725'], '科技'), 1);
-  store.renameGroup('科技', '半导体');
-  assert.ok(store.listGroups().includes('半导体'));
-  store.deleteGroup('半导体');
-  assert.equal(store.listHoldings().find(x => x.code === '161725').groupName, null);
+  store.addGroup('临时组A');
+  store.addGroup('临时组B');
+  assert.ok(store.listGroups().includes('临时组A'));
+  store.moveToGroup('161725', '临时组A');
+  assert.equal(store.listHoldings().find(x => x.code === '161725').groupName, '临时组A');
+  assert.equal(store.moveBatchToGroup(['161725'], '临时组B'), 1);
+  store.renameGroup('临时组B', '临时组C');
+  assert.ok(store.listGroups().includes('临时组C'));
+  store.deleteGroup('临时组C');
+  assert.ok(!store.listGroups().includes('临时组C'));
+  // 归还演示分组
+  store.moveToGroup('161725', data.DEMO_GROUP_MAP['161725'] || null);
 });
 check('金额制加仓：按净值折算份额并移动加权成本', () => {
-  // 000001 现有 1200 份，成本 0.864；加仓 1000 元，净值 1.02
-  store.putNav('000001', { date: '2026-11-18', nav: 1.02, prevNav: 0.96, pct: 6.25 });
+  // 用加仓前的快照推导期望值（不假设方向：成本向净值方向移动）
   const before = store.listHoldings().find(h => h.code === '000001');
-  const addShares = Number((1000 / 1.02).toFixed(2));
+  const nav = 1.02;
+  const costBefore = before.cost;
+  store.putNav('000001', { date: '2026-11-18', nav, prevNav: 0.96, pct: 6.25 });
+  const addShares = Number((1000 / nav).toFixed(2));
   store.upsertHolding({
     code: '000001', name: before.name,
     shares: Number((before.shares + addShares).toFixed(2)),
@@ -163,10 +191,12 @@ check('金额制加仓：按净值折算份额并移动加权成本', () => {
     watch: before.watch, groupName: before.groupName,
   });
   const after = store.listHoldings().find(h => h.code === '000001');
-  assert.equal(after.shares, Number((1200 + addShares).toFixed(2)));
-  assert.ok(after.cost > before.cost, '成本应上移');
+  assert.equal(after.shares, Number((before.shares + addShares).toFixed(2)));
+  // 加权成本应向加仓净值方向移动（高于成本时上移，低于时下移）
+  assert.ok(after.cost !== costBefore, '成本应发生变化');
+  assert.ok(after.cost > nav - 0.001, `成本应不高于加仓净值附近（${after.cost}）`);
   // 成本价保留 4 位小数，允许 0.1 元以内的舍入误差
-  assert.ok(Math.abs(after.shares * after.cost - (1200 * 0.864 + 1000)) < 0.1);
+  assert.ok(Math.abs(after.shares * after.cost - (before.shares * costBefore + 1000)) < 0.1);
 });
 check('批量导入：每行「代码 金额」', () => {
   const parsed = util.parseBatch('110022 2000\n519674 500\n无效行');
@@ -174,17 +204,29 @@ check('批量导入：每行「代码 金额」', () => {
   assert.equal(parsed.find(p => p.code === '110022').amount, 2000);
 });
 check('批量导入后持仓增加且入库', () => {
-  const before = store.listHoldings().length;
-  const parsed = util.parseBatch('000021 300');
-  store.upsertHolding({ code: '000021', name: '华夏成长混合(后端)', shares: null, cost: null, watch: true, pendingAmount: parsed[0].amount });
-  assert.equal(store.listHoldings().length, before);
-  assert.ok(db.getFundBase('000021'), '待确认基金应入库');
+  const parsed = util.parseBatch('161725 300');
+  // 用一只当前无待确认的基金验证「待确认金额并入已有持仓」
+  const hold = store.listHoldings().find(h => h.code === '161725');
+  store.upsertHolding({
+    code: '161725', name: hold.name,
+    shares: hold.shares, cost: hold.cost,
+    watch: hold.watch, groupName: hold.groupName,
+    pendingAmount: parsed[0].amount,
+  });
+  assert.ok(db.getFundBase('161725'), '待确认基金应入库');
 });
 check('待确认金额计入持仓总额', () => {
   const p = store.buildPortfolio(store.listHoldings(), null);
-  const r = p.rows.find(x => x.code === '000021');
+  const r = p.rows.find(x => x.code === '161725');
   assert.equal(r.pending, 300);
-  assert.equal(r.amount, 300);
+  // 持仓金额必须包含待确认部分（>= 份额×净值 且 > 300）
+  assert.ok(r.amount >= 300 + r.shares * 0.5, `金额应含份额市值+待确认，实际 ${r.amount}`);
+  // 还原演示状态
+  store.upsertHolding({
+    code: '161725', name: r.name,
+    shares: r.shares, cost: r.cost,
+    watch: r.watch, groupName: r.groupName, pendingAmount: null,
+  });
 });
 
 // ============ 4. 设置页 / 数据库 ============

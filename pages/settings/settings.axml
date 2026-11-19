@@ -1,16 +1,8 @@
 <view class="page set-page">
-  <!-- 行情刷新 -->
+  <!-- 行情刷新设置 -->
   <view class="card">
-    <view class="set-title"><text>🔄 行情更新</text></view>
-    <view class="set-note">
-      <text>最近更新：{{lastUpdatedText}}</text>
-    </view>
-    <view class="btn-row">
-      <button class="btn btn-small btn-primary" disabled="{{syncing}}" onClick="manualUpdate">
-        <text>{{syncing ? '刷新中…' : '立即更新'}}</text>
-      </button>
-    </view>
-    <view class="field-label"><text>自动刷新间隔</text></view>
+    <view class="set-title"><text>🔄 行情刷新</text></view>
+    <view class="field-label"><text>行情页自动刷新间隔</text></view>
     <view class="type-row">
       <view
         class="type-chip {{refreshSec === item.value ? 'type-chip-on' : ''}}"
@@ -20,82 +12,65 @@
       </view>
     </view>
     <view class="set-note">
-      <text>自动刷新仅在本页停留期间生效，切换页面即暂停，省电省流量。</text>
+      <text>作用于「行情」「自选」「持仓」三个页面，切到后台即暂停，回前台自动恢复。</text>
     </view>
   </view>
 
-  <!-- 数据库总览 -->
+  <!-- 基金库 -->
   <view class="card">
-    <view class="set-title"><text>📊 数据库</text></view>
+    <view class="set-title"><text>📊 基金库</text></view>
     <view class="set-stats" a:if="{{info}}">
       <view class="stat-cell">
         <text class="stat-value">{{info.fundCount}}</text>
         <text class="stat-label">基金库</text>
       </view>
+      <view class="stat-div"></view>
       <view class="stat-cell">
         <text class="stat-value">{{info.etfCount}}</text>
         <text class="stat-label">ETF</text>
       </view>
+      <view class="stat-div"></view>
       <view class="stat-cell">
         <text class="stat-value">{{info.indexCount}}</text>
         <text class="stat-label">指数</text>
       </view>
+      <view class="stat-div"></view>
       <view class="stat-cell">
         <text class="stat-value">{{info.navCount}}</text>
         <text class="stat-label">净值缓存</text>
       </view>
     </view>
+    <view class="set-note" a:if="{{syncedAtText}}">
+      <text>最近全量同步：{{syncedAtText}}</text>
+    </view>
+    <view class="set-note" a:if="{{libShortHint}}">
+      <text style="color:#fa8c16">{{libShortHint}}</text>
+    </view>
+    <view class="set-note" a:if="{{auditText}}">
+      <text>{{auditText}}</text>
+    </view>
     <view class="btn-row">
-      <button class="btn btn-small btn-primary" disabled="{{syncing}}" onClick="syncLibrary">
-        <text>{{syncing ? '同步中…' : '同步全量基金'}}</text>
-      </button>
-      <button class="btn btn-small" onClick="loadAll"><text>刷新统计</text></button>
-      <button class="btn btn-small btn-danger" onClick="clearFundLib"><text>清空基金库</text></button>
+      <view class="btn btn-small btn-primary" onTap="syncLibrary"><text>{{syncing ? '同步中…' : '同步全量基金'}}</text></view>
+      <view class="btn btn-small btn-danger" a:if="{{syncing}}" onTap="cancelSync"><text>取消</text></view>
+      <view class="btn btn-small" a:if="{{!syncing && syncedAtText}}" onTap="forceSync"><text>强制重新同步</text></view>
+      <view class="btn btn-small btn-danger" a:if="{{!syncing}}" onTap="clearFundLib"><text>清空基金库</text></view>
+    </view>
+    <view class="sync-progress" a:if="{{syncing && syncPages > 0}}">
+      <view class="sync-bar">
+        <view class="sync-bar-fill" style="width: {{syncPct}}%"></view>
+      </view>
+      <text class="sync-pct">{{syncPct}}% · {{syncCount}} 只 · 第 {{syncPage}}/{{syncPages}} 页</text>
     </view>
     <view class="set-note" a:if="{{syncProgress}}"><text>{{syncProgress}}</text></view>
     <view class="set-note">
-      <text>同步从东方财富拉取全部在售基金（约 2 万只、103 页）与最新净值，约需 2-3 分钟，20 小时内不重复同步。</text>
-    </view>
-  </view>
-
-  <!-- 基金基础库检索 -->
-  <view class="card">
-    <view class="set-title"><text>🔍 基金基础库</text></view>
-    <view class="toolbar">
-      <input
-        class="input set-search"
-        placeholder="搜索代码 / 名称 / 拼音"
-        value="{{fundQuery}}"
-        onInput="onQuery"
-      />
-      <button class="btn btn-small" onClick="toggleFundStatus"><text>{{fundStatus === 'onsale' ? '在售' : '全部'}}</text></button>
-    </view>
-
-    <view class="type-row" a:if="{{types.length > 0}}">
-      <view class="type-chip" onTap="onType" data-type=""><text>全部</text></view>
-      <view class="type-chip" a:for="{{types}}" a:key="type" onTap="onType" data-type="{{item.type}}">
-        <text>{{item.type}} {{item.count}}</text>
-      </view>
-    </view>
-
-    <view class="fund-row" a:for="{{funds}}" a:key="code">
-      <view class="fund-main">
-        <text class="fund-name">{{item.name}}</text>
-        <text class="fund-code">{{item.code}} · {{item.type || '未分类'}}</text>
-      </view>
-    </view>
-    <view class="empty" a:if="{{funds.length === 0}}"><text>本地基金库为空。点上方「同步全量基金」拉取，或在「持仓基金 → ＋ 添加」中搜索添加。</text></view>
-
-    <view class="toolbar" a:if="{{fundPages > 1}}">
-      <text class="hint set-hint">第 {{fundPage}} / {{fundPages}} 页 · 共 {{total}} 条</text>
-      <button class="btn btn-small" onClick="prevPage" disabled="{{fundPage <= 1}}"><text>上一页</text></button>
-      <button class="btn btn-small" onClick="nextPage" disabled="{{fundPage >= fundPages}}"><text>下一页</text></button>
+      <text>同步从东方财富拉取全部在售基金（约 2 万只、103 页）与最新净值入库，此后「行情 → 全部基金」可离线按代码 / 名称 / 拼音检索。全程约 1-2 分钟，可随时取消或中断（已入库部分保留，下次同步自动从断点续传），20 小时内不重复同步。</text>
     </view>
   </view>
 
   <!-- 危险操作 -->
   <view class="card">
     <view class="set-title"><text>⚠️ 危险操作</text></view>
-    <button class="btn btn-danger set-clear" onClick="clearEverything"><text>清空全部本地数据</text></button>
+    <view class="btn btn-danger set-clear" onTap="clearEverything"><text>清空全部本地数据</text></view>
+    <view class="set-note"><text>清空后演示数据会在下次启动时重新播种。</text></view>
   </view>
 </view>

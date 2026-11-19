@@ -1,11 +1,13 @@
-import { fetchMarketQuotes, fetchFundQuotes } from '../../utils/api.js';
+import { fetchMarketQuotes, fetchFundQuotes, getLastRequestError } from '../../utils/api.js';
 import { INDEX_LIBRARY, ETF_LIBRARY, searchFundList, listAllFunds } from '../../utils/data.js';
-import { listHoldings, listWatchedIndices, setWatch, upsertHolding, setWatchedIndices } from '../../utils/store.js';
+import { listHoldings, listWatchedIndices, setWatch, upsertHolding, setWatchedIndices, autoRefreshMixin, markUpdated } from '../../utils/store.js';
 import { money, pct, signedMoney, signColor, compactAmt, debounce, toast } from '../../utils/util.js';
 
 const PAGE_SIZE = 10;
 
 Page({
+  ...autoRefreshMixin(),
+
   data: {
     sub: 'index',        // index | fund | etf
     indexPage: 1,
@@ -19,6 +21,8 @@ Page({
     fundType: 'all',
     fundTypes: [],
     loading: false,
+    loadFailed: false,
+    failReason: '',
     watchedIndices: [],
   },
 
@@ -30,7 +34,21 @@ Page({
 
   onShow() {
     this.setData({ watchedIndices: listWatchedIndices() });
-    this.refreshCurrent();
+    this.resumeAutoRefresh();
+  },
+
+  onHide() {
+    this.stopAutoRefresh();
+  },
+
+  onUnload() {
+    this.stopAutoRefresh();
+  },
+
+  /** 定时刷新入口：刷新当前子页行情 */
+  refreshNow() {
+    markUpdated();
+    return this.refreshCurrent();
   },
 
   onPullDownRefresh() {
@@ -54,31 +72,54 @@ Page({
   // --- 大盘指数 -------------------------------------------------------------
 
   async loadIndex() {
-    this.setData({ loading: true });
+    this.setData({ loading: true, loadFailed: false, failReason: '' });
     const watched = new Set(listWatchedIndices());
     const secids = INDEX_LIBRARY.map(x => x[0]);
-    const quotes = await fetchMarketQuotes(secids);
-    const byCode = {};
-    for (const q of quotes) byCode[q.code] = q;
-    const all = INDEX_LIBRARY.map(([secid, code, name, category]) => {
-      const q = byCode[code] || {};
-      return {
-        code, name, category,
-        price: q.price != null ? money(q.price) : '—',
-        changePct: q.changePct != null ? pct(q.changePct) : '—',
-        pctClass: q.changePct > 0 ? 'idx-pct-up' : (q.changePct < 0 ? 'idx-pct-down' : ''),
-        color: signColor(q.changePct),
-        changeAmt: q.changeAmt != null ? signedMoney(q.changeAmt) : '—',
-        watched: watched.has(code),
-      };
-    });
-    const pages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
-    const page = Math.min(this.data.indexPage, pages);
-    this.setData({
-      indices: all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-      indexPage: page, indexPages: pages,
-      loading: false,
-    });
+    try {
+      const quotes = await fetchMarketQuotes(secids);
+      // 请求全空 = 网络不通 / 域名白名单未配置
+      if (!quotes || quotes.length === 0) {
+        const err = getLastRequestError();
+        this.setData({
+          loading: false,
+          loadFailed: true,
+          failReason: err ? `error=${err.error} ${err.message} ${err.url}` : 'my.request 无响应（无错误码）',
+        });
+        return;
+      }
+      const byCode = {};
+      for (const q of quotes) byCode[q.code] = q;
+      const all = INDEX_LIBRARY.map(([secid, code, name, category]) => {
+        const q = byCode[code] || {};
+        return {
+          code, name, category,
+          price: q.price != null ? money(q.price) : '—',
+          changePct: q.changePct != null ? pct(q.changePct) : '—',
+          pctClass: q.changePct > 0 ? 'idx-pct-up' : (q.changePct < 0 ? 'idx-pct-down' : ''),
+          color: signColor(q.changePct),
+          changeAmt: q.changeAmt != null ? signedMoney(q.changeAmt) : '—',
+          watched: watched.has(code),
+        };
+      });
+      const pages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+      const page = Math.min(this.data.indexPage, pages);
+      this.setData({
+        indices: all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+        indexPage: page, indexPages: pages,
+        loading: false,
+      });
+    } catch (e) {
+      // 任何同步/异步异常都不允许卡死页面
+      this.setData({
+        loading: false,
+        loadFailed: true,
+        failReason: `页面异常: ${e && e.message ? e.message : e}`,
+      });
+    }
+  },
+
+  retryLoad() {
+    this.refreshCurrent();
   },
 
   prevIndexPage() { this.setData({ indexPage: Math.max(1, this.data.indexPage - 1) }, () => this.loadIndex()); },
@@ -107,6 +148,11 @@ Page({
   async loadEtf() {
     this.setData({ loading: true });
     const quotes = await fetchMarketQuotes(ETF_LIBRARY.map(x => x[0]));
+    if (!quotes || quotes.length === 0) {
+      this.setData({ loading: false, loadFailed: true });
+      return;
+    }
+    this.setData({ loadFailed: false });
     const byCode = {};
     for (const q of quotes) byCode[q.code] = q;
     const watched = new Set(listHoldings().filter(x => x.watch).map(x => x.code));
@@ -184,6 +230,7 @@ Page({
 
     // 补充行情
     const quotes = await fetchFundQuotes(slice.map(x => x.code));
+    const watchedSet = new Set(listHoldings().filter(x => x.watch).map(x => x.code));
     const enriched = slice.map(x => {
       const q2 = quotes[x.code];
       return {
@@ -192,6 +239,7 @@ Page({
         changePct: q2 ? pct(q2.pct) : '—',
         pctClass: q2 && q2.pct > 0 ? 'idx-pct-up' : (q2 && q2.pct < 0 ? 'idx-pct-down' : ''),
         color: signColor(q2 ? q2.pct : null),
+        watched: watchedSet.has(x.code),
       };
     });
 

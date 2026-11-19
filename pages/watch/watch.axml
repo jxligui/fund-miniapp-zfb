@@ -25,29 +25,35 @@
     </text></view>
   </block>
 
-  <!-- 自选基金 -->
+  <!-- 自选基金（操作默认折叠，点 ⋯ 展开） -->
   <block a:if="{{sub === 'fund'}}">
     <view class="card hold-card" a:for="{{funds}}" a:key="code">
       <view class="hold-title">
-        <view style="flex:1">
-          <view class="hold-name" data-code="{{item.code}}" data-name="{{item.name}}" onTap="goDetail">
+        <view class="hold-info" data-code="{{item.code}}" data-name="{{item.name}}" onTap="goDetail">
+          <view class="hold-name">
             <text>{{item.name}}</text>
             <text class="tag tag-brand" a:if="{{item.isHeld}}">持仓</text>
             <text class="tag tag-warn" a:if="{{item.usingYesterday}}">按昨日净值</text>
           </view>
           <view class="idx-meta"><text>{{item.code}} · 份额 {{item.shares}}</text></view>
         </view>
-        <view>
+        <view class="hold-right">
           <view class="hold-amount"><text>{{item.amount}}</text></view>
           <view class="hold-today" style="color:{{item.color}}"><text>{{item.changePct}}</text></view>
         </view>
+        <text
+          class="hold-more {{expandedCode === item.code ? 'hold-more-on' : ''}}"
+          catchTap="toggleActions" data-code="{{item.code}}">
+          {{expandedCode === item.code ? '▲' : '▼'}}
+        </text>
       </view>
       <view class="hold-stats">
         <view class="hold-stat"><text>净值</text><text class="hold-stat-value">{{item.nav}}</text></view>
       </view>
-      <view class="btn-row">
-        <button class="btn btn-small btn-primary" data-code="{{item.code}}" data-name="{{item.name}}" catchTap="goHoldings">加入持仓</button>
+      <view class="btn-row" a:if="{{expandedCode === item.code}}">
+        <button class="btn btn-small btn-primary" a:if="{{!item.isHeld}}" data-code="{{item.code}}" data-name="{{item.name}}" catchTap="goHoldings">加入持仓</button>
         <button class="btn btn-small btn-danger" a:if="{{!item.isHeld}}" data-code="{{item.code}}" data-name="{{item.name}}" catchTap="removeFund">取消自选</button>
+        <view class="hint" a:if="{{item.isHeld}}" style="flex:1"><text>已在持仓中，请到「持仓」页管理（不能取消自选）。</text></view>
       </view>
     </view>
     <view class="empty" a:if="{{funds.length === 0}}"><text>

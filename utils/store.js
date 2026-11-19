@@ -10,7 +10,7 @@
  *   ft.masterPwds 万能密码哈希数组（最多 6 个，8 位数字）
  */
 
-import { upsertFundBase } from './db.js';
+import { upsertFundBase, getNavDb } from './db.js';
 
 const K = {
   holdings: 'ft.holdings',
@@ -23,9 +23,11 @@ const K = {
   lastUpdated: 'ft.lastUpdated',
 };
 
+/** 支付宝 my.getStorageSync({ key }) 返回 { data }，需拆包（微信式裸值不生效）。 */
 function read(key, fallback) {
   try {
-    const v = my.getStorageSync(key);
+    const res = my.getStorageSync({ key });
+    const v = res && typeof res === 'object' && 'data' in res ? res.data : res;
     if (v === '' || v === null || v === undefined) return fallback;
     return typeof v === 'string' ? JSON.parse(v) : v;
   } catch (e) {
@@ -36,7 +38,8 @@ function read(key, fallback) {
 /** Read a raw (non-JSON) string value, e.g. the PIN hash. */
 function readRaw(key, fallback = null) {
   try {
-    const v = my.getStorageSync(key);
+    const res = my.getStorageSync({ key });
+    const v = res && typeof res === 'object' && 'data' in res ? res.data : res;
     if (v === '' || v === null || v === undefined) return fallback;
     return String(v);
   } catch (e) {
@@ -46,7 +49,7 @@ function readRaw(key, fallback = null) {
 
 function write(key, value) {
   try {
-    my.setStorageSync(key, typeof value === 'string' ? value : JSON.stringify(value));
+    my.setStorageSync({ key, data: typeof value === 'string' ? value : JSON.stringify(value) });
   } catch (e) {
     console.error('[storage] write failed', key, e);
   }
@@ -69,7 +72,7 @@ export function verifyPin(pin) {
 }
 
 export function clearPin() {
-  try { my.removeStorageSync(K.pin); } catch (e) {}
+  try { my.removeStorageSync({ key: K.pin }); } catch (e) {}
 }
 
 // --- 万能密码（master passwords）--------------------------------------------
@@ -295,7 +298,15 @@ export function putNav(code, nav) {
 
 export function navOf(code) {
   const navs = listNavs();
-  return navs[code] || null;
+  if (navs[code]) return navs[code];
+  // 二级兜底：本地数据库 fund_nav（全量同步 / 搜索入库时写入）
+  const fromDb = getNavDb(code);
+  if (fromDb) {
+    // 回填到快速缓存，后续读取不再穿透
+    putNav(code, fromDb);
+    return fromDb;
+  }
+  return null;
 }
 
 // --- portfolio computation --------------------------------------------------
@@ -375,6 +386,37 @@ export function markUpdated(at) {
 export function getLastUpdated() {
   const v = Number(read(K.lastUpdated, 0));
   return isFinite(v) && v > 0 ? v : 0;
+}
+
+/**
+ * 页面自动刷新混入：按设置的间隔在页面停留期间定时刷新。
+ * 用法：在 Page({ ...autoRefreshMixin(), onShow() { this.startAutoRefresh(); } })
+ * 页面需提供 this.refreshNow()（返回 Promise 或 void）。
+ */
+export function autoRefreshMixin() {
+  return {
+    /** 启动定时刷新（按 ft.refreshSec，0 = 关闭） */
+    startAutoRefresh() {
+      this.stopAutoRefresh();
+      const sec = getRefreshSec();
+      if (!sec) return;
+      this._refreshTimer = setInterval(() => {
+        if (typeof this.refreshNow === 'function') {
+          try { this.refreshNow(); } catch (e) { /* 刷新失败不打断 */ }
+        }
+      }, sec * 1000);
+    },
+    stopAutoRefresh() {
+      if (this._refreshTimer) { clearInterval(this._refreshTimer); this._refreshTimer = null; }
+    },
+    /** 页面 onShow 调用：立即刷新一次并恢复定时器 */
+    resumeAutoRefresh() {
+      if (typeof this.refreshNow === 'function') {
+        try { this.refreshNow(); } catch (e) {}
+      }
+      this.startAutoRefresh();
+    },
+  };
 }
 
 /** 金额保留 2 位小数（避免 110.00000000000001 这类浮点误差）。 */

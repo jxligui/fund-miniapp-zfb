@@ -7,9 +7,9 @@ import assert from 'node:assert/strict';
 // --- 模拟支付宝小程序运行时 ---
 const storage = new Map();
 global.my = {
-  getStorageSync: k => (storage.has(k) ? storage.get(k) : ''),
-  setStorageSync: (k, v) => storage.set(k, v),
-  removeStorageSync: k => storage.delete(k),
+  getStorageSync: ({ key }) => ({ data: storage.has(key) ? storage.get(key) : '', success: true }),
+  setStorageSync: ({ key, data }) => storage.set(key, data),
+  removeStorageSync: ({ key }) => storage.delete(key),
   showToast: () => {},
   showModal: () => {},
   request: ({ url, success }) => {

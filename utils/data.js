@@ -12,18 +12,40 @@ import { INDEX_LIBRARY, ETF_LIBRARY, DEFAULT_INDICES } from './constants.js';
 
 export { INDEX_LIBRARY, ETF_LIBRARY, DEFAULT_INDICES };
 
-/** 首次使用的演示持仓（成本贴近真实净值，盈亏混合） */
+/** 首次使用的演示数据（自选 + 持仓）。代码与名称均为东财真实在售基金。 */
 export const DEMO_HOLDINGS = [
-  { code: '000001', name: '华夏成长混合', shares: 1200, cost: 0.8640, watch: true },
-  { code: '110022', name: '易方达消费行业股票', shares: 800, cost: 3.2510, watch: true },
-  { code: '161725', name: '招商中证白酒指数(LOF)A', shares: 2000, cost: 0.6370, watch: true },
-  { code: '519674', name: '银河创新成长混合A', shares: 300, cost: 8.0950, watch: true },
-  { code: '270002', name: '广发稳健增长混合A', shares: 1500, cost: 1.4010, watch: true },
-  { code: '005827', name: '易方达蓝筹精选混合', shares: 1000, cost: 1.4800, watch: true },
+  // --- 真实持仓（有份额有成本）---
+  { code: '159995', name: '芯片ETF华夏', shares: 100, cost: 1.1966, watch: true },
+  { code: '513180', name: '恒生科技ETF华夏', shares: 6423.98, cost: 0.4696, watch: true },
+  { code: '000001', name: '华夏成长混合', shares: 1234.56, cost: 1.85, watch: true },
+  { code: '519674', name: '银河创新成长混合A', shares: 600, cost: 2.48, watch: true },
+  { code: '005827', name: '易方达蓝筹精选混合', shares: 1000, cost: 1.93, watch: true },
+  { code: '270002', name: '广发稳健增长混合A', shares: 2300.98, cost: 1.6164, watch: true, pendingAmount: 2000 },
+  { code: '161725', name: '招商中证白酒指数(LOF)A', shares: 800, cost: 1.05, watch: true },
+  { code: '110022', name: '易方达消费行业股票', shares: 500, cost: 4.21, watch: true },
+  // --- 纯自选（无份额，仅关注）---
   { code: '000021', name: '华夏优势增长混合', shares: null, cost: null, watch: true },
+  { code: '000081', name: '天治可转债增强债券C', shares: null, cost: null, watch: true },
+  { code: '000080', name: '天治可转债增强债券A', shares: null, cost: null, watch: true },
+  { code: '000116', name: '嘉实丰益纯债定期债券A', shares: null, cost: null, watch: true },
   { code: '512480', name: '半导体ETF', shares: null, cost: null, watch: true },
   { code: '159928', name: '消费ETF', shares: null, cost: null, watch: true },
 ];
+
+/** 演示持仓的分组（贴近截图：白酒/债券/科技 板块） */
+export const DEMO_GROUPS = ['白酒消费', '科技半导体', '债券稳健'];
+
+/** 演示持仓的分组归属（code -> 组名） */
+export const DEMO_GROUP_MAP = {
+  '161725': '白酒消费',
+  '110022': '白酒消费',
+  '159995': '科技半导体',
+  '513180': '科技半导体',
+  '512480': '科技半导体',
+  '000080': '债券稳健',
+  '000081': '债券稳健',
+  '000116': '债券稳健',
+};
 
 /**
  * 基金检索（东财接口）。
@@ -62,7 +84,6 @@ export function searchFundList(query) {
 
 /**
  * 全量基金检索：优先读本地基金库（离线可用），再用网络结果补齐。
- * 与 DSH 插件的 fund_base 表行为一致。
  */
 export function listAllFunds({ query = '', type = '', status = 'onsale', limit = 50 } = {}) {
   const res = fundBasePage({ page: 1, size: limit, query, type, status });

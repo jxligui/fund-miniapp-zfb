@@ -3,10 +3,13 @@ import { searchFundList } from '../../utils/data.js';
 import {
   listHoldings, upsertHolding, removeHolding, moveToGroup, moveBatchToGroup,
   listGroups, addGroup, renameGroup, deleteGroup, buildPortfolio, putNav, navOf,
+  autoRefreshMixin, markUpdated,
 } from '../../utils/store.js';
 import { money, pct, signedMoney, signColor, toast, confirm, parseBatch } from '../../utils/util.js';
 
 Page({
+  ...autoRefreshMixin(),
+
   data: {
     rows: [],
     totals: {},
@@ -31,6 +34,7 @@ Page({
     checked: [],
     query: '',
     suggest: [],
+    expandedCode: '',   // 当前展开操作按钮的持仓代码（'' = 全部折叠）
   },
 
   onLoad() {
@@ -38,7 +42,21 @@ Page({
   },
 
   onShow() {
-    this.refresh();
+    this.resumeAutoRefresh();
+  },
+
+  onHide() {
+    this.stopAutoRefresh();
+  },
+
+  onUnload() {
+    this.stopAutoRefresh();
+  },
+
+  /** 定时刷新入口 */
+  refreshNow() {
+    markUpdated();
+    return this.refresh();
   },
 
   onPullDownRefresh() {
@@ -107,8 +125,14 @@ Page({
   },
 
   switchGroup(e) {
-    this.setData({ activeGroup: e.currentTarget.dataset.key });
+    this.setData({ activeGroup: e.currentTarget.dataset.key, expandedCode: '' });
     this.applyFilter();
+  },
+
+  /** 展开/收起单张卡片的操作按钮（手风琴：同时只展开一张） */
+  toggleActions(e) {
+    const code = e.currentTarget.dataset.code;
+    this.setData({ expandedCode: this.data.expandedCode === code ? '' : code });
   },
 
   // --- 添加 / 加仓 / 减仓 ---------------------------------------------------
@@ -172,6 +196,7 @@ Page({
     const { code, name, mode } = e.currentTarget.dataset;
     this.setData({
       showTrade: true, tradeMode: mode || 'add', tradeCode: code, tradeName: name, amount: '',
+      expandedCode: '',
     });
   },
 
@@ -284,6 +309,7 @@ Page({
     this.setData({
       showMove: true, tradeCode: code, tradeName: (hold && hold.name) || code,
       moveTarget: (hold && hold.groupName) || '__none__',
+      expandedCode: '',
     });
   },
 
@@ -335,6 +361,7 @@ Page({
     if (!ok) return;
     removeHolding(code);
     toast('已删除');
+    this.setData({ expandedCode: '' });
     this.refresh();
   },
 

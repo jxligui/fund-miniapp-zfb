@@ -30,7 +30,12 @@
       <view class="idx-chg" style="color:{{item.color}}"><text>涨跌额 {{item.changeAmt}}</text></view>
     </view>
 
-    <view class="empty" a:if="{{!loading && indices.length === 0}}"><text>加载中…</text></view>
+    <view class="empty" a:if="{{loadFailed}}">
+      <text>行情加载失败</text>
+      <text class="fail-reason">{{failReason}}</text>
+      <button class="btn btn-small" onTap="retryLoad" style="margin: 24rpx auto; width: 240rpx;">重试</button>
+    </view>
+    <view class="empty" a:if="{{!loading && !loadFailed && indices.length === 0}}"><text>加载中…</text></view>
   </block>
 
   <!-- 全部基金 -->
@@ -57,11 +62,20 @@
       </view>
       <view class="right list-row-right">
         <view style="color:{{item.color}};font-weight:600"><text>{{item.changePct}}</text></view>
-        <view class="sub list-row-sub"><text>{{item.watched ? '★ 已自选' : '＋ 自选'}}</text></view>
+        <text
+          class="fund-watch {{item.watched ? 'fund-watch-on' : ''}}"
+          data-code="{{item.code}}" data-name="{{item.name}}" catchTap="toggleFundWatch">
+          {{item.watched ? '★ 已自选' : '☆ 加自选'}}
+        </text>
       </view>
     </view>
 
-    <view class="empty" a:if="{{!loading && funds.length === 0}}"><text>
+    <view class="empty" a:if="{{loadFailed}}">
+      <text>行情加载失败</text>
+      <text class="fail-reason">{{failReason}}</text>
+      <button class="btn btn-small" onTap="retryLoad" style="margin: 24rpx auto; width: 240rpx;">重试</button>
+    </view>
+    <view class="empty" a:if="{{!loading && !loadFailed && funds.length === 0}}"><text>
       暂无结果。输入基金代码或名称搜索，或在「我的自选 / 持仓基金」中添加。
     </text></view>
   </block>
@@ -76,8 +90,18 @@
       <view class="right list-row-right">
         <view style="font-weight:600"><text>{{item.price}}</text></view>
         <view style="color:{{item.color}}"><text>{{item.changePct}}</text></view>
+        <text
+          class="fund-watch {{item.watched ? 'fund-watch-on' : ''}}"
+          data-code="{{item.code}}" data-name="{{item.name}}" catchTap="toggleEtfWatch">
+          {{item.watched ? '★ 已自选' : '☆ 加自选'}}
+        </text>
       </view>
     </view>
-    <view class="empty" a:if="{{!loading && etfs.length === 0}}"><text>加载中…</text></view>
+    <view class="empty" a:if="{{loadFailed}}">
+      <text>行情加载失败</text>
+      <text class="fail-reason">{{failReason}}</text>
+      <button class="btn btn-small" onTap="retryLoad" style="margin: 24rpx auto; width: 240rpx;">重试</button>
+    </view>
+    <view class="empty" a:if="{{!loading && !loadFailed && etfs.length === 0}}"><text>加载中…</text></view>
   </block>
 </view>
